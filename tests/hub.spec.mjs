@@ -20,7 +20,8 @@ test('launchpad lists the games and fits the screen', async ({ page }) => {
   await expect(page.locator('.game')).toHaveCount(4)
   await expect(page.getByRole('link', { name: 'Play Calm Bubbles' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Play Quiet Words' })).toHaveAttribute('href', '/quiet_words/')
-  await expect(page.locator('.game-soon')).toHaveCount(1)
+  await expect(page.locator('.game-soon')).toHaveCount(0)
+  await expect(page.getByRole('link', { name: 'Play Love To Color' })).toHaveAttribute('href', '/love-to-color/')
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)
   expect(overflow).toBeLessThanOrEqual(0)
 })
@@ -76,14 +77,14 @@ test('works offline after one visit, and Free up space keeps progress', async ({
   expect(await page.evaluate(() => localStorage.getItem('bubbles:progress'))).toBe('{"popped":7}')
 })
 
-test('leaves games that have not moved in alone', async ({ page }) => {
+test('leaves addresses that are not GameHub games alone', async ({ page }) => {
   await readyOffline(page)
-  await page.evaluate(() => fetch('/love-to-color/').catch(() => {}))
+  await page.evaluate(() => fetch('/not-a-game/').catch(() => {}))
   const names = await cacheNames(page)
-  expect(names.some((n) => n.includes('love'))).toBe(false)
+  expect(names.some((n) => n.includes('not-a-game'))).toBe(false)
   for (const name of names) {
     const urls = await page.evaluate(async (n) => (await (await caches.open(n)).keys()).map((r) => r.url), name)
-    expect(urls.some((u) => u.includes('/love-to-color/'))).toBe(false)
+    expect(urls.some((u) => u.includes('/not-a-game/'))).toBe(false)
   }
 })
 

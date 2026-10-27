@@ -37,11 +37,11 @@ self.GAMES = [
   },
   {
     id: 'love-to-color',
-    name: 'Love to Color',
+    name: 'Love To Color',
     path: '/love-to-color/',
-    blurb: 'Relaxing colouring with gentle music.',
+    blurb: 'Tap to fill: color by number or in your own colors.',
     icon: '🎨',
     color: '#d6a7a0',
-    status: 'soon',
+    status: 'ready',
   },
 ]
