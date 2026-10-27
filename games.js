@@ -53,4 +53,13 @@ self.GAMES = [
     color: '#d6a7a0',
     status: 'ready',
   },
+  {
+    id: 'arrowhead',
+    name: 'Arrowhead',
+    path: '/arrowhead/',
+    blurb: 'Tap the arrows with a clear way out and untangle the picture.',
+    icon: '🏹',
+    color: '#b9a58a',
+    status: 'soon',
+  },
 ]
