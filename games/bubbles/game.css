@@ -17,6 +17,10 @@ html.ios-app #pond {
   height: 100lvh;
 }
 
+html.ios-solid-bar #pond {
+  height: var(--app-height, 100%);
+}
+
 .hud {
   position: fixed;
   top: calc(env(safe-area-inset-top) + 10px);

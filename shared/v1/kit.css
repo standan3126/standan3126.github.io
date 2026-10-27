@@ -31,6 +31,12 @@ html.ios-app body {
   height: 100lvh;
 }
 
+/* Under a solid top bar the page starts below it: use the height it's given (kit.js). */
+html.ios-solid-bar,
+html.ios-solid-bar body {
+  height: var(--app-height, 100%);
+}
+
 /* The iPhone's top bar is see-through (white clock), so light pages put a soft green strip
    behind it. A game can change the colour with --hub-topbar. */
 html.ios-app body::before {

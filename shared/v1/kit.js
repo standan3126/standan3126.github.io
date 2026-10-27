@@ -14,8 +14,25 @@ export const isInstalled = () =>
 
 // iOS 26 sizes a home-screen app short by the clock-bar height, leaving a strip at the bottom.
 // html.ios-app (see kit.css) sizes by the full screen instead. Same fix as Quiet Words.
+//
+// GameHub icons added before 2026-10-27 keep a solid top bar, and iOS then starts the page below
+// it, so the full-screen height is too tall and the bottom of the game falls off the screen.
+// That case gets html.ios-solid-bar and --app-height (the height actually given); kit.css sizes
+// by it, and a game can use var(--app-height) for its own full-height parts.
 export function setupPage() {
-  if (navigator.standalone) document.documentElement.classList.add('ios-app')
+  if (!navigator.standalone) return
+  const root = document.documentElement
+  root.classList.add('ios-app')
+  const probe = document.createElement('div')
+  probe.style.cssText = 'position:fixed;top:0;height:0;padding-top:env(safe-area-inset-top);visibility:hidden'
+  document.body.append(probe)
+  if (probe.offsetHeight === 0) {
+    const fit = () => root.style.setProperty('--app-height', `${window.innerHeight}px`)
+    fit()
+    window.addEventListener('resize', fit)
+    root.classList.add('ios-solid-bar')
+  }
+  probe.remove()
 }
 
 // Every game must show this: an installed app has no browser back button.
