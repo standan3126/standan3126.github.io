@@ -1,0 +1,49 @@
+# Publishes GameHub to https://standan3126.github.io/ on every push to main.
+# There's no build step: it checks the scripts, stamps the version, and uploads the site.
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check every script parses
+        run: for f in $(git ls-files '*.js'); do node --check "$f"; done
+      - name: Stamp the version (a new version makes phones refresh the launchpad)
+        run: |
+          short=${GITHUB_SHA::7}
+          sed -i "s/^const VERSION = 'dev'/const VERSION = '$short'/" sw.js
+          grep -q "const VERSION = '$short'" sw.js
+          echo "{ \"version\": \"$short\", \"date\": \"$(date -u +%Y-%m-%d)\" }" > version.json
+      - name: Gather the site
+        run: rsync -a --exclude='.git*' --exclude='tests' --exclude='tools' --exclude='package*.json' --exclude='playwright.config.mjs' --exclude='README.md' ./ _site/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

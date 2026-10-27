@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>GameHub</title>
+    <meta name="description" content="Calm family games in one app." />
+    <meta name="theme-color" content="#f4efe4" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="GameHub" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="/style.css" />
+    <script>
+      if (navigator.standalone) document.documentElement.classList.add('ios-app')
+    </script>
+  </head>
+  <body>
+    <main class="hub">
+      <header class="hub-header">
+        <h1>GameHub</h1>
+        <p>Pick a game. Each one works offline after you've played it once.</p>
+      </header>
+
+      <ul class="games" id="games" aria-label="Games"></ul>
+
+      <section class="install" id="install" hidden>
+        <h2>Put GameHub on your home screen</h2>
+        <p><strong>iPhone:</strong> tap the Share button <span aria-hidden="true">(□↑)</span>, then <em>Add to Home Screen</em>.</p>
+        <p><strong>Android:</strong> tap the menu <span aria-hidden="true">(⋮)</span>, then <em>Install app</em> or <em>Add to Home screen</em>.</p>
+      </section>
+
+      <footer class="hub-footer">
+        <p id="storage"></p>
+        <p id="version"></p>
+      </footer>
+    </main>
+
+    <dialog id="confirm" class="confirm">
+      <form method="dialog">
+        <h2 id="confirm-title"></h2>
+        <p>This removes the offline copy to free up space. <strong>Progress is kept.</strong> Next time, the game needs the internet once to load again.</p>
+        <div class="confirm-actions">
+          <button value="cancel" class="secondary">Keep it</button>
+          <button value="ok" class="primary">Free up space</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="/games.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>

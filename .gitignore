@@ -1,0 +1,13 @@
+node_modules/
+test-results/
+playwright-report/
+_site/
+
+# Personal / private (never public)
+CLAUDE.md
+private/
+personal/
+*.local*
+.env*
+*.pem
+*.key

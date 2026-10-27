@@ -1,0 +1,255 @@
+/* The launchpad. Same calm colours as the shared kit (shared/v1/kit.css). */
+
+:root {
+  --bg: #f4efe4;
+  --ink: #3b3a34;
+  --soft: #77736a;
+  --accent: #6f9480;
+  --accent-deep: #4f7a64;
+  --card: rgba(255, 252, 245, 0.92);
+  --line: rgba(59, 58, 52, 0.12);
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+/* An iPhone home-screen app measures by the full screen (100lvh) to reach the bottom edge. */
+html.ios-app,
+html.ios-app body {
+  min-height: 100lvh;
+}
+
+body {
+  background:
+    radial-gradient(120% 60% at 50% 0%, #fbf8f1 0%, transparent 70%),
+    linear-gradient(180deg, #f4efe4 0%, #ece5d6 100%) fixed;
+}
+
+.hub {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: calc(env(safe-area-inset-top) + 28px) calc(env(safe-area-inset-right) + 16px)
+    calc(env(safe-area-inset-bottom) + 24px) calc(env(safe-area-inset-left) + 16px);
+}
+
+.hub-header h1 {
+  margin: 0;
+  font-size: 2rem;
+  letter-spacing: 0.01em;
+}
+
+.hub-header p {
+  margin: 6px 0 22px;
+  color: var(--soft);
+  line-height: 1.45;
+}
+
+.games {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.game {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  grid-template-areas: 'art text' 'actions actions';
+  gap: 12px 14px;
+  padding: 16px;
+  border-radius: 20px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  box-shadow: 0 4px 18px rgba(60, 50, 30, 0.06);
+}
+
+.game-art {
+  grid-area: art;
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  font-size: 34px;
+  background: color-mix(in srgb, var(--tint) 45%, white);
+}
+
+.game-text {
+  grid-area: text;
+  min-width: 0;
+}
+
+.game h2 {
+  margin: 2px 0 4px;
+  font-size: 1.2rem;
+}
+
+.game-blurb {
+  margin: 0;
+  color: var(--soft);
+  line-height: 1.4;
+}
+
+.game-saved {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  color: var(--soft);
+}
+
+.game-saved:empty {
+  display: none;
+}
+
+.game-actions {
+  grid-area: actions;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.play,
+.free,
+.confirm button {
+  font: inherit;
+  font-weight: 600;
+  min-height: 48px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.play {
+  flex: 1;
+  background: var(--accent);
+  color: #fff;
+  font-size: 1.1rem;
+}
+
+.play:active,
+.free:active {
+  transform: scale(0.97);
+}
+
+.free {
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--soft);
+  font-size: 0.9rem;
+}
+
+.free[hidden] {
+  display: none;
+}
+
+.game-soon {
+  opacity: 0.72;
+}
+
+.game-soon .game-saved {
+  display: none;
+}
+
+.soon {
+  flex: 1;
+  text-align: center;
+  padding: 12px;
+  border-radius: 999px;
+  border: 1px dashed var(--line);
+  color: var(--soft);
+  font-weight: 600;
+}
+
+.install {
+  margin-top: 22px;
+  padding: 16px;
+  border-radius: 20px;
+  background: rgba(111, 148, 128, 0.12);
+  line-height: 1.45;
+}
+
+.install h2 {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+}
+
+.install p {
+  margin: 6px 0;
+}
+
+.hub-footer {
+  margin-top: 22px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--soft);
+}
+
+.hub-footer p {
+  margin: 4px 0;
+}
+
+.hub-footer p:empty {
+  display: none;
+}
+
+.confirm {
+  max-width: min(420px, calc(100vw - 32px));
+  border: 0;
+  border-radius: 20px;
+  padding: 22px;
+  background: #fffcf5;
+  color: var(--ink);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.confirm::backdrop {
+  background: rgba(40, 35, 25, 0.35);
+}
+
+.confirm h2 {
+  margin: 0 0 10px;
+  font-size: 1.2rem;
+}
+
+.confirm p {
+  margin: 0 0 18px;
+  line-height: 1.45;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.confirm button {
+  flex: 1;
+  border: 0;
+  font-size: 1rem;
+}
+
+.confirm .primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.confirm .secondary {
+  background: rgba(59, 58, 52, 0.08);
+  color: var(--ink);
+}

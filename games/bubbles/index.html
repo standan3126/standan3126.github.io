@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Calm Bubbles · GameHub</title>
+    <meta name="theme-color" content="#f4efe4" />
+    <link rel="stylesheet" href="/shared/v1/kit.css" />
+    <link rel="stylesheet" href="game.css" />
+  </head>
+  <body>
+    <canvas id="pond" aria-label="Bubbles floating up. Tap them to pop."></canvas>
+
+    <div class="hud">
+      <p class="count"><span id="popped">0</span> popped</p>
+      <button type="button" id="open-settings" class="round" aria-label="Settings">⚙</button>
+    </div>
+
+    <dialog id="settings" class="panel">
+      <form method="dialog" class="panel-close"><button aria-label="Close settings">✕</button></form>
+      <h2>Settings</h2>
+
+      <section>
+        <h3>Sound</h3>
+        <label class="row">Notes <input type="range" id="vol-notes" min="0" max="1" step="0.05" /></label>
+        <label class="row">Nature <input type="range" id="vol-nature" min="0" max="1" step="0.05" /></label>
+        <label class="row">Music <input type="checkbox" id="music" /></label>
+        <div class="chips" id="nature" aria-label="Nature sounds"></div>
+      </section>
+
+      <section>
+        <h3>Move your progress</h3>
+        <p class="hint">Use these to carry progress to another phone or app.</p>
+        <div class="buttons">
+          <button type="button" id="make-code">Get transfer code</button>
+          <button type="button" id="enter-code">Enter a code</button>
+          <button type="button" id="save-file">Save backup file</button>
+          <button type="button" id="load-file">Load backup file</button>
+        </div>
+        <textarea id="code" rows="3" placeholder="Transfer code" hidden></textarea>
+        <button type="button" id="use-code" hidden>Use this code</button>
+      </section>
+
+      <section>
+        <h3>Set progress by hand</h3>
+        <label class="row">Bubbles popped <input type="number" id="manual" min="0" inputmode="numeric" /></label>
+        <button type="button" id="set-manual">Set</button>
+      </section>
+
+      <p id="message" role="status" class="message"></p>
+    </dialog>
+
+    <script type="module" src="game.js"></script>
+  </body>
+</html>
