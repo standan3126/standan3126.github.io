@@ -17,7 +17,7 @@ Shared pieces any GameHub game can use. They are plain JavaScript modules served
 | File | Gives you |
 |---|---|
 | `kit.css` | Calm colours (`--hub-*`), the Exit button and Tap to Start styles, the iPhone home-screen sizing fix |
-| `kit.js` | `setupPage()`, `addExitButton()`, `tapToStart()`, `isInstalled()` |
+| `kit.js` | `setupPage()`, `addExitButton()`, `tapToStart()`, `isInstalled()`, `warmOffline()` (save a whole game for offline in the background) |
 | `save.js` | `gameStore(id)` (saves with the game's name in front), transfer codes, backup files |
 | `secret.js` | `hiddenUnlock()`: 5 quick taps + the family code reveal grown-up tools (set progress by hand) |
 | `sound/` | `Sound`: soft marimba notes, 7 nature sounds, gentle generated music (from Quiet Words) |

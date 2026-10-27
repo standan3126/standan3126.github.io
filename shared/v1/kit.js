@@ -61,3 +61,20 @@ export function tapToStart({ title, subtitle = '', button = 'Tap to Start', onSt
     document.body.append(screen)
   })
 }
+
+// Saves a whole game for offline play in the background, so parts it only loads later (level
+// packs, pictures) are there without the internet too. listUrl is a JSON array of the game's
+// file addresses. Only fetches what isn't saved yet, and only when GameHub's offline helper is
+// running, so it costs nothing after the first time.
+export async function warmOffline(listUrl) {
+  if (!navigator.serviceWorker?.controller || !('caches' in self) || !navigator.onLine) return
+  try {
+    const files = await (await fetch(listUrl)).json()
+    for (const file of files) {
+      if (await caches.match(file)) continue
+      await fetch(file).catch(() => {})
+    }
+  } catch {
+    // Offline or the list is missing: the game still works, it just saves as it goes.
+  }
+}

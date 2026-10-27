@@ -33,7 +33,7 @@ self.GAMES = [
     blurb: 'Swipe letters to fill a calm crossword.',
     icon: '🌿',
     color: '#c9b48f',
-    status: 'soon',
+    status: 'ready',
   },
   {
     id: 'love-to-color',
