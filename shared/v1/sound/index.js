@@ -9,12 +9,18 @@
 //   const sound = new Sound()
 //   startButton.onclick = () => { sound.unlock(); sound.setNature({ creek: 0.5, birds: 0.3 }) }
 //   sound.step(3); sound.chime(); sound.celebrate()
+//
+// Music is the cozy generated music (music.js) unless a game picks a style (styles.js), which
+// the composer (composer.js) plays instead: sound.setStyle(style, dials); sound.setMusic(true).
 import { createLayer, LAYERS } from './ambience.js'
+import { Composer } from './composer.js'
 import { Music } from './music.js'
 import { gain, impulseResponse } from './noise.js'
 import { Notes } from './notes.js'
 
 export { LAYERS, LAYER_LABELS } from './ambience.js'
+export { STYLES } from './styles.js'
+export { DIALS } from './composer.js'
 
 const LOOKAHEAD = 1.5 // seconds scheduled ahead; covers timer throttling when the tab is hidden
 const TICK_MS = 250
@@ -31,6 +37,9 @@ export class Sound {
     this.mix = {}
     this.layers = new Map()
     this.layerStops = new Map()
+    this.style = null
+    this.dials = {}
+    this.mutedParts = []
   }
 
   // Browsers only allow audio to start from a tap, so call this from the first one
@@ -75,11 +84,13 @@ export class Sound {
     }
     this.notes = new Notes(ctx, this.buses.notes)
     this.music = new Music(ctx, this.buses.music)
+    this.composer = new Composer(ctx, this.buses.music)
 
     setInterval(() => {
       const t = ctx.currentTime
       for (const layer of this.layers.values()) layer.schedule(t, t + LOOKAHEAD)
       this.music.schedule(t, t + LOOKAHEAD)
+      this.composer.schedule(t, t + LOOKAHEAD)
     }, TICK_MS)
     this.refresh()
   }
@@ -106,6 +117,24 @@ export class Sound {
     this.refresh()
   }
 
+  // Play a style instead of the cozy music (null goes back to it). dials: see composer.js.
+  setStyle(style, dials = {}) {
+    this.style = style
+    this.dials = { ...dials }
+    this.refresh()
+  }
+
+  setDials(dials) {
+    Object.assign(this.dials, dials)
+    this.composer?.setDials(dials)
+  }
+
+  // Parts of the style to leave out, by id.
+  setMutedParts(ids) {
+    this.mutedParts = [...ids]
+    this.composer?.setMuted(ids)
+  }
+
   refresh() {
     const ctx = this.ctx
     if (!ctx) return
@@ -116,8 +145,14 @@ export class Sound {
     this.buses.nature.gain.setTargetAtTime(curve(v.nature), t, 0.3)
     this.buses.music.gain.setTargetAtTime(curve(v.music), t, 0.3)
     // Don't spend battery generating what can't be heard.
-    if (this.musicOn && v.music > 0 && !this.muted) this.music.start()
+    const playing = this.musicOn && v.music > 0 && !this.muted
+    this.composer.setStyle(this.style)
+    this.composer.setDials(this.dials)
+    this.composer.setMuted(this.mutedParts)
+    if (playing && !this.style) this.music.start()
     else this.music.stop()
+    if (playing && this.style) this.composer.start()
+    else this.composer.stop()
     this.crossfade(this.muted || v.nature === 0 ? {} : this.mix)
   }
 

@@ -18,6 +18,15 @@ self.GAMES = [
     test: true,
   },
   {
+    id: 'melody-garden',
+    name: 'Melody Garden',
+    path: '/games/melody-garden/',
+    blurb: 'Make your own calm music: pick a style and shape it.',
+    icon: '🎶',
+    color: '#a9c79a',
+    status: 'ready',
+  },
+  {
     id: 'momahjong',
     name: 'Momahjong',
     path: '/momahjong/',

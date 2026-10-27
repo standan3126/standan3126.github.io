@@ -20,7 +20,9 @@ Shared pieces any GameHub game can use. They are plain JavaScript modules served
 | `kit.js` | `setupPage()`, `addExitButton()`, `tapToStart()`, `isInstalled()`, `warmOffline()` (save a whole game for offline in the background) |
 | `save.js` | `gameStore(id)` (saves with the game's name in front), transfer codes, backup files |
 | `secret.js` | `hiddenUnlock()`: 5 quick taps + the family code reveal grown-up tools (set progress by hand) |
-| `sound/` | `Sound`: soft marimba notes, 7 nature sounds, gentle generated music (from Quiet Words) |
+| `sound/` | `Sound`: soft marimba notes, 7 nature sounds, gentle generated music (from Quiet Words), and music styles |
+| `sound/styles.js` | `STYLES`: music recipes made in Melody Garden (lullaby, Japanese garden, Celtic harp, rainy café, island, canyon flute). A game plays one with `sound.setStyle(style, dials)` + `sound.setMusic(true)` |
+| `sound/composer.js`, `sound/instruments.js` | The composer that plays a style live (never repeats) and its instruments: music box, kalimba, marimba, harp, koto, soft piano, pad, wooden flute, bass, soft drum, shaker, rattle, brushes |
 
 ## Rules
 

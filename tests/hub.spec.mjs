@@ -17,7 +17,8 @@ const cacheNames = (page) => page.evaluate(() => caches.keys())
 test('launchpad lists the games and fits the screen', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByRole('heading', { name: 'GameHub', exact: true })).toBeVisible()
-  await expect(page.locator('.game')).toHaveCount(4)
+  await expect(page.locator('.game')).toHaveCount(5)
+  await expect(page.getByRole('link', { name: 'Play Melody Garden' })).toHaveAttribute('href', '/games/melody-garden/')
   await expect(page.getByRole('link', { name: 'Play Calm Bubbles' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Play Quiet Words' })).toHaveAttribute('href', '/quiet_words/')
   await expect(page.locator('.game-soon')).toHaveCount(0)
@@ -148,4 +149,66 @@ test('sound starts after the tap with no errors', async ({ page }) => {
   await page.getByRole('button', { name: 'Rain' }).click()
   await page.waitForTimeout(1500)
   expect(errors).toEqual([])
+})
+
+test('melody garden plays a style, and the dials, players and pause work', async ({ page }) => {
+  const errors = []
+  page.on('pageerror', (e) => errors.push(e.message))
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
+  await page.goto('/games/melody-garden/')
+  await page.getByRole('button', { name: 'Tap to Start' }).click()
+  const state = () =>
+    page.evaluate(() => {
+      const { sound } = window.melodyGarden
+      return { style: sound.style?.id, playing: sound.composer?.playing, muted: [...sound.composer.muted], dials: { ...sound.composer.dials } }
+    })
+  await expect.poll(async () => (await state()).playing).toBe(true)
+  await page.getByRole('radio', { name: /Canyon Flute/ }).click()
+  expect((await state()).style).toBe('canyon')
+  await page.getByRole('button', { name: 'Heartbeat drum' }).click()
+  expect((await state()).muted).toContain('drum')
+  await page.getByLabel('Speed').fill('0.9')
+  expect((await state()).dials.speed).toBe(0.9)
+  // Each style keeps its own settings.
+  await page.getByRole('radio', { name: /Rainy Café/ }).click()
+  expect((await state()).muted).toEqual([])
+  await page.getByRole('radio', { name: /Canyon Flute/ }).click()
+  expect((await state()).muted).toContain('drum')
+  await page.getByRole('button', { name: 'Pause' }).click()
+  await expect.poll(async () => (await state()).playing).toBe(false)
+  await page.waitForTimeout(500)
+  expect(errors).toEqual([])
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)
+  expect(overflow).toBeLessThanOrEqual(0)
+})
+
+test('every music style makes sound, without clipping', async ({ page }, info) => {
+  test.skip(info.project.name !== 'iphone-size', 'checked once')
+  await page.goto('/games/melody-garden/')
+  const levels = await page.evaluate(async () => {
+    const { Composer } = await import('/shared/v1/sound/composer.js')
+    const { STYLES } = await import('/shared/v1/sound/styles.js')
+    const out = {}
+    for (const style of STYLES) {
+      const ctx = new OfflineAudioContext(1, 44100 * 8, 44100)
+      const c = new Composer(ctx, ctx.destination)
+      c.setStyle(style)
+      c.setDials(style.dials)
+      c.start()
+      for (let t = 0; t < 8; t += 0.25) c.schedule(t, t + 1.5)
+      const d = (await ctx.startRendering()).getChannelData(0)
+      let sum = 0
+      let peak = 0
+      for (let i = 44100; i < d.length; i++) {
+        sum += d[i] * d[i]
+        peak = Math.max(peak, Math.abs(d[i]))
+      }
+      out[style.id] = { rms: 20 * Math.log10(Math.sqrt(sum / (d.length - 44100))), peak }
+    }
+    return out
+  })
+  for (const [id, { rms, peak }] of Object.entries(levels)) {
+    expect(rms, id).toBeGreaterThan(-30)
+    expect(peak, id).toBeLessThan(1)
+  }
 })
