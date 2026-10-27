@@ -36,6 +36,22 @@
       </section>
 
       <section>
+        <h2>My songs</h2>
+        <p class="hint">Shape a style the way you like it, then save it as your own song.</p>
+        <form id="saveForm" class="save-row">
+          <input id="songName" type="text" maxlength="30" placeholder="Name your song" aria-label="Song name" />
+          <button type="submit" class="small-button">Save song</button>
+        </form>
+        <div id="songs" class="songs"></div>
+        <button type="button" class="text-button" id="pasteOpen">Paste a song code</button>
+        <div id="codeArea" hidden>
+          <textarea id="codeBox" class="code-box" rows="3" aria-label="Song code"></textarea>
+          <button type="button" class="small-button" id="pasteAdd">Add this song</button>
+        </div>
+        <p id="songNote" class="hint" role="status"></p>
+      </section>
+
+      <section>
         <h2>Volume</h2>
         <label class="dial"><span class="ends"><span>Quiet</span><span>Loud</span></span><input type="range" id="volume" min="0" max="1" step="0.05" aria-label="Volume" /></label>
       </section>

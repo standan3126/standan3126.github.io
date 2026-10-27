@@ -163,17 +163,17 @@ test('melody garden plays a style, and the dials, players and pause work', async
       return { style: sound.style?.id, playing: sound.composer?.playing, muted: [...sound.composer.muted], dials: { ...sound.composer.dials } }
     })
   await expect.poll(async () => (await state()).playing).toBe(true)
-  await page.getByRole('radio', { name: /Canyon Flute/ }).click()
-  expect((await state()).style).toBe('canyon')
-  await page.getByRole('button', { name: 'Heartbeat drum' }).click()
-  expect((await state()).muted).toContain('drum')
+  await page.getByRole('radio', { name: /Japanese Garden/ }).click()
+  expect((await state()).style).toBe('garden')
+  await page.getByRole('button', { name: 'Bamboo flute' }).click()
+  expect((await state()).muted).toContain('flute')
   await page.getByLabel('Speed').fill('0.9')
   expect((await state()).dials.speed).toBe(0.9)
   // Each style keeps its own settings.
   await page.getByRole('radio', { name: /Rainy Café/ }).click()
   expect((await state()).muted).toEqual([])
-  await page.getByRole('radio', { name: /Canyon Flute/ }).click()
-  expect((await state()).muted).toContain('drum')
+  await page.getByRole('radio', { name: /Japanese Garden/ }).click()
+  expect((await state()).muted).toContain('flute')
   await page.getByRole('button', { name: 'Pause' }).click()
   await expect.poll(async () => (await state()).playing).toBe(false)
   await page.waitForTimeout(500)
@@ -211,4 +211,34 @@ test('every music style makes sound, without clipping', async ({ page }, info) =
     expect(rms, id).toBeGreaterThan(-30)
     expect(peak, id).toBeLessThan(1)
   }
+})
+
+test('melody garden saves a song, and its code brings it back', async ({ page }) => {
+  const errors = []
+  page.on('pageerror', (e) => errors.push(e.message))
+  await page.goto('/games/melody-garden/')
+  await page.getByRole('button', { name: 'Tap to Start' }).click()
+  await page.getByRole('radio', { name: /Celtic Harp/ }).click()
+  await page.getByLabel('Mood').fill('0.8')
+  await page.getByRole('button', { name: 'Bodhrán' }).click()
+  await page.getByLabel('Song name').fill('Misty Morning')
+  await page.getByRole('button', { name: 'Save song' }).click()
+  await expect(page.locator('.song-open', { hasText: 'Misty Morning' })).toHaveAttribute('aria-pressed', 'true')
+  await page.getByRole('button', { name: 'Copy code' }).click()
+  const code = await page.locator('#codeBox').inputValue()
+  expect(code).toMatch(/^GH1\.melody-garden\./)
+  // Delete it, then bring it back from the code.
+  page.once('dialog', (d) => d.accept())
+  await page.getByRole('button', { name: 'Delete Misty Morning' }).click()
+  await expect(page.locator('.song-card')).toHaveCount(0)
+  await page.getByRole('button', { name: 'Paste a song code' }).click()
+  await page.locator('#codeBox').fill(code)
+  await page.getByRole('button', { name: 'Add this song' }).click()
+  await expect(page.locator('.song-open', { hasText: 'Misty Morning' })).toHaveAttribute('aria-pressed', 'true')
+  const now = await page.evaluate(() => {
+    const { sound } = window.melodyGarden
+    return { style: sound.style.id, mood: sound.composer.dials.mood, muted: [...sound.composer.muted] }
+  })
+  expect(now).toEqual({ style: 'celtic', mood: 0.8, muted: ['bodhran'] })
+  expect(errors).toEqual([])
 })

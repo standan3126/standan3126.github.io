@@ -6,15 +6,17 @@
 // chords as scale degrees (0 = the key's own chord), tempo, beats per bar, and parts. A part
 // with off: true starts switched off. dials are the style's starting dial positions.
 // Never change a style a game uses without checking that game still sounds right.
+//
+// SONGS at the bottom are styles the user shaped in Melody Garden and sent as a code: a style
+// plus its sliders, resting players and nature sounds.
 
 const MAJOR = [0, 2, 4, 5, 7, 9, 11]
 const DORIAN = [0, 2, 3, 5, 7, 9, 10]
-const MAJOR_PENTATONIC = [0, 2, 4, 7, 9]
-const MINOR_PENTATONIC = [0, 3, 5, 7, 10]
+const MIXOLYDIAN = [0, 2, 4, 5, 7, 9, 10] // the bright, slightly old-world sound of many Irish tunes
 const YO = [0, 2, 5, 7, 9] // Japanese folk scale, bright
 const IN = [0, 1, 5, 7, 8] // Japanese "in" scale, wistful
 
-export const STYLES = [
+const BASE_STYLES = [
   {
     id: 'lullaby',
     name: 'Music Box Lullaby',
@@ -62,19 +64,21 @@ export const STYLES = [
     name: 'Celtic Harp',
     icon: '🍀',
     color: '#9cc39a',
-    blurb: 'Flowing harp, like a green hillside',
-    tempo: 84,
+    blurb: 'Tin whistle and harp in a lilting Irish jig',
+    // A slow jig: two lilting groups of three in every bar, over a piper's drone.
+    tempo: 112,
     meter: 3,
     root: 62,
-    sunny: MAJOR,
+    sunny: MIXOLYDIAN,
     dreamy: DORIAN,
-    chords: [0, 4, 5, 3],
-    dials: { speed: 0.5, busy: 0.55, bright: 0.55, echo: 0.4, mood: 0 },
+    chords: [0, 0, 6, 0, 0, 3, 6, 0],
+    dials: { speed: 0.4, busy: 0.55, bright: 0.55, echo: 0.35, mood: 0 },
     nature: { birds: 0.25 },
     parts: [
-      { id: 'tune', label: 'Harp tune', kind: 'melody', instrument: 'harp', octave: 1, density: 0.55 },
-      { id: 'flow', label: 'Harp flow', kind: 'arp', instrument: 'harp', octave: -1, pattern: 'updown', density: 1, level: 0.75 },
-      { id: 'whistle', label: 'Tin whistle', kind: 'melody', instrument: 'flute', octave: 1, density: 0.35, phrase: 8, level: 0.7, off: true },
+      { id: 'whistle', label: 'Tin whistle', kind: 'melody', instrument: 'whistle', octave: 1, density: 0.6, rhythm: 'jig', grace: true },
+      { id: 'harp', label: 'Harp', kind: 'arp', instrument: 'harp', octave: -1, pattern: 'up', density: 0.9, level: 0.5 },
+      { id: 'drone', label: 'Pipes drone', kind: 'drone', instrument: 'pad', octave: -1, bars: 4, level: 0.4 },
+      { id: 'bodhran', label: 'Bodhrán', kind: 'beat', instrument: 'bodhran', pattern: [1, 0, 0.5, 0.8, 0, 0.5], level: 0.7 },
     ],
   },
   {
@@ -121,24 +125,45 @@ export const STYLES = [
     ],
   },
   {
-    id: 'canyon',
-    name: 'Canyon Flute',
-    icon: '🌄',
-    color: '#d9a77c',
-    blurb: 'A gentle wooden flute, inspired by Native American flute music',
-    tempo: 56,
+    id: 'meadow',
+    name: 'Sunrise Meadow',
+    icon: '🌼',
+    color: '#e8cf7f',
+    blurb: 'Calm, slow and gently happy, like a sunny morning',
+    tempo: 70,
     meter: 4,
-    root: 66,
-    sunny: MAJOR_PENTATONIC,
-    dreamy: MINOR_PENTATONIC,
-    chords: [0],
-    dials: { speed: 0.45, busy: 0.4, bright: 0.5, echo: 0.6, mood: 1 },
-    nature: { wind: 0.3 },
+    root: 62,
+    sunny: MAJOR,
+    dreamy: DORIAN,
+    chords: [0, 3, 5, 4],
+    dials: { speed: 0.4, busy: 0.4, bright: 0.55, echo: 0.45, mood: 0 },
+    nature: { birds: 0.3 },
     parts: [
-      { id: 'flute', label: 'Wooden flute', kind: 'melody', instrument: 'flute', octave: 0, density: 0.5, free: true, grace: true },
-      { id: 'drone', label: 'Hum', kind: 'drone', instrument: 'pad', octave: -1, bars: 4, level: 0.45 },
-      { id: 'drum', label: 'Heartbeat drum', kind: 'beat', instrument: 'frameDrum', pattern: [1, 0, 0.7, 0, 0, 0, 0, 0], level: 0.55 },
-      { id: 'rattle', label: 'Rattle', kind: 'beat', instrument: 'rattle', pattern: [0, 0, 0, 0, 0, 0, 0, 0.8, 0, 0, 0, 0, 0, 0, 0, 0], off: true },
+      { id: 'tune', label: 'Soft piano', kind: 'melody', instrument: 'piano', octave: 1, density: 0.4 },
+      { id: 'sparkle', label: 'Kalimba', kind: 'arp', instrument: 'kalimba', octave: 0, pattern: 'up', density: 0.35, level: 0.6 },
+      { id: 'pad', label: 'Warm pad', kind: 'chords', instrument: 'pad', octave: 0, level: 0.28 },
+      { id: 'bass', label: 'Bass', kind: 'bass', instrument: 'bass', octave: -2, hits: [0], level: 0.7 },
     ],
   },
 ]
+
+// Songs from Melody Garden. Each: { id, name, from (a style id), dials, off (resting players),
+// nature }. Add new ones at the end; never change one a game uses.
+const SONGS = []
+
+function fromSong(song) {
+  const base = BASE_STYLES.find((b) => b.id === song.from)
+  return {
+    ...base,
+    id: song.id,
+    name: song.name,
+    blurb: `${base.name}, shaped in Melody Garden`,
+    from: base.id,
+    dials: { ...base.dials, ...song.dials },
+    nature: song.nature ?? base.nature,
+    parts: base.parts.map((p) => ({ ...p, off: song.off ? song.off.includes(p.id) : p.off })),
+  }
+}
+
+export const STYLES = [...BASE_STYLES, ...SONGS.map(fromSong)]
+export { BASE_STYLES, fromSong }

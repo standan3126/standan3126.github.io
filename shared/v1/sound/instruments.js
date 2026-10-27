@@ -207,6 +207,51 @@ export const INSTRUMENTS = {
     },
   },
 
+  whistle: {
+    name: 'Tin whistle',
+    // A small, bright, pure-toned whistle: quick to speak, a touch of air, a light vibrato on
+    // longer notes only.
+    play(ctx, out, { freq, when, vel, len }) {
+      const v = vary(vel) * 0.11
+      const hold = Math.max(0.08, len * 0.9)
+      const osc = ctx.createOscillator()
+      osc.frequency.value = freq
+      const second = ctx.createOscillator()
+      second.frequency.value = freq * 2
+      const lfo = ctx.createOscillator()
+      lfo.frequency.value = 5.5
+      const wobble = ctx.createGain()
+      wobble.gain.setValueAtTime(0, when)
+      wobble.gain.setValueAtTime(0, when + 0.25)
+      wobble.gain.linearRampToValueAtTime(hold > 0.4 ? freq * 0.005 : 0, when + 0.5)
+      lfo.connect(wobble).connect(osc.frequency)
+      const env = ctx.createGain()
+      env.gain.setValueAtTime(0, when)
+      env.gain.linearRampToValueAtTime(v, when + 0.025)
+      env.gain.setValueAtTime(v * 0.9, when + hold)
+      env.gain.linearRampToValueAtTime(0, when + hold + 0.08)
+      osc.connect(env)
+      second.connect(gain(ctx, 0.18)).connect(env)
+      env.connect(out)
+      const air = ctx.createBufferSource()
+      air.buffer = noiseBuffer(ctx, 'pink')
+      const band = filter(ctx, 'bandpass', freq * 2, 2)
+      const breath = ctx.createGain()
+      breath.gain.setValueAtTime(0, when)
+      breath.gain.linearRampToValueAtTime(v * 0.25, when + 0.02)
+      breath.gain.linearRampToValueAtTime(v * 0.05, when + 0.12)
+      breath.gain.linearRampToValueAtTime(0, when + hold + 0.08)
+      air.connect(band).connect(breath).connect(out)
+      const end = when + hold + 0.12
+      for (const o of [osc, second, lfo]) {
+        o.start(when)
+        o.stop(end)
+      }
+      air.start(when, Math.random() * 6)
+      air.stop(end)
+    },
+  },
+
   bass: {
     name: 'Soft bass',
     play(ctx, out, { freq, when, vel, len }) {
@@ -249,6 +294,25 @@ export const INSTRUMENTS = {
       const thump = filter(ctx, 'lowpass', 400)
       thump.connect(gain(ctx, v * 0.5)).connect(out)
       burst(ctx, when, thump, 0.05)
+    },
+  },
+
+  bodhran: {
+    name: 'Bodhrán',
+    // The Irish frame drum: a soft, round thump with a little skin in it.
+    play(ctx, out, { when, vel }) {
+      const v = vary(vel) * 0.35
+      const osc = ctx.createOscillator()
+      osc.frequency.setValueAtTime(140, when)
+      osc.frequency.exponentialRampToValueAtTime(80, when + 0.12)
+      const env = ctx.createGain()
+      env.gain.setValueAtTime(0, when)
+      env.gain.linearRampToValueAtTime(v, when + 0.005)
+      env.gain.exponentialRampToValueAtTime(0.0001, when + 0.35)
+      osc.connect(env).connect(out)
+      osc.start(when)
+      osc.stop(when + 0.4)
+      click(ctx, out, when, 900, v * 0.5, 0.03)
     },
   },
 

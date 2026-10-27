@@ -3,7 +3,8 @@
 // A style is a recipe: a key, two scales (sunny and dreamy), a chord progression, a tempo, and
 // a few parts, each played by an instrument (instruments.js). Parts:
 //   melody    a little tune: a one-bar idea, played three times over the changing chords,
-//             then a gentle ending, and a new idea for the next four bars
+//             then a gentle ending, and a new idea for the next four bars (rhythm: 'jig' for
+//             the Irish lilt of three eighths)
 //   arp       the chord's notes one after another (harp-style)
 //   chords    the chord's notes together, held or on a rhythm
 //   bass      the chord's root, low
@@ -210,8 +211,8 @@ export class Composer {
     if (!hit) return
     // The idea follows the chords: the same shape, starting from this chord's notes.
     const degree = chord + hit.offset
-    if (part.grace && hit.len > 1.5 && Math.random() < 0.4) {
-      // A quick flick from the note above, as wooden flutes do.
+    if (part.grace && hit.len >= (part.free ? 1.5 : 1) && Math.random() < 0.4) {
+      // A quick flick from the note above (a "cut" on a tin whistle).
       this.sound(part, this.note(degree + 1, octave), when - 0.07, 0.5, 0.06)
     }
     this.sound(part, this.note(degree, octave), when, hit.at === 0 ? 1 : 0.8, this.beat * hit.len)
@@ -221,15 +222,31 @@ export class Composer {
     const spb = this.stepsPerBar
     const notes = []
     let offset = pick([0, 2, 4])
+    const walk = () => {
+      // Mostly small steps, sometimes a leap.
+      offset += Math.random() < 0.75 ? pick([-1, 1, 1, -1, 0]) : pick([-3, -2, 2, 3])
+      offset = Math.max(-2, Math.min(7, offset))
+    }
+    if (part.rhythm === 'jig') {
+      // A jig: each half bar is three eighths, "da-da-da" or the lilting long-short "daa-da".
+      for (let half = 0; half < spb; half += 3) {
+        const cell = Math.random() < 0.35 + busy * 0.5 ? [0.5, 0.5, 0.5] : Math.random() < 0.8 ? [1, 0.5] : [1.5]
+        let at = half
+        for (const len of cell) {
+          notes.push({ at, offset, len })
+          walk()
+          at += len * 2
+        }
+      }
+      return notes
+    }
     for (let at = 0; at < spb; ) {
       // Long notes for a free, singing part; otherwise mostly quarter and eighth notes.
       const len = part.free ? pick([2, 3, 4]) : Math.random() < busy * 0.6 ? 0.5 : pick([1, 1, 1.5])
       const strong = at % 2 === 0
       if (at === 0 || Math.random() < (strong ? busy + 0.2 : busy * 0.7)) {
         notes.push({ at, offset, len })
-        // Mostly small steps, sometimes a leap.
-        offset += Math.random() < 0.75 ? pick([-1, 1, 1, -1, 0]) : pick([-3, -2, 2, 3])
-        offset = Math.max(-2, Math.min(7, offset))
+        walk()
       }
       at += Math.max(1, Math.round(len * 2))
     }
