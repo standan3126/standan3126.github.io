@@ -31,6 +31,20 @@ html.ios-app body {
   height: 100lvh;
 }
 
+/* The iPhone's top bar is see-through (white clock), so light pages put a soft green strip
+   behind it. A game can change the colour with --hub-topbar. */
+html.ios-app body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top);
+  background: var(--hub-topbar, #4f7a64);
+  z-index: 1000;
+  pointer-events: none;
+}
+
 .hub-button {
   font: inherit;
   font-size: 1.05rem;

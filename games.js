@@ -24,7 +24,7 @@ self.GAMES = [
     blurb: 'Match the tiles and clear the board.',
     icon: '🀄',
     color: '#8fb39a',
-    status: 'soon',
+    status: 'ready',
   },
   {
     id: 'quiet-words',
