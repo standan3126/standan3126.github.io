@@ -60,6 +60,6 @@ self.GAMES = [
     blurb: 'Tap the arrows with a clear way out and untangle the picture.',
     icon: '🏹',
     color: '#b9a58a',
-    status: 'soon',
+    status: 'ready',
   },
 ]
