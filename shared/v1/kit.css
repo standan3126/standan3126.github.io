@@ -120,3 +120,24 @@ html.ios-app body {
     transition: none;
   }
 }
+
+/* The hidden code box from secret.js */
+.hub-secret {
+  display: flex;
+  gap: 8px;
+  margin: 6px 0 12px;
+}
+
+.hub-secret input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--hub-line);
+}
+
+.hub-secret .hub-button {
+  min-height: 44px;
+  padding: 0 18px;
+}

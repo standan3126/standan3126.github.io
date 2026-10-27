@@ -2,6 +2,7 @@
 // phone (Exit to Hub, Tap to Start, sound, saves, transfer codes, offline), so it uses the
 // toolbox for everything and adds only the bubbles.
 import { addExitButton, setupPage, tapToStart } from '/shared/v1/kit.js'
+import { hiddenUnlock } from '/shared/v1/secret.js'
 import { gameStore, makeTransferCode, openBackupFile, readTransferCode, saveBackupFile } from '/shared/v1/save.js'
 import { LAYER_LABELS, LAYERS, Sound } from '/shared/v1/sound/index.js'
 
@@ -221,7 +222,9 @@ $('load-file').addEventListener('click', async () => {
   }
 })
 
-// A checkpoint typed in by hand: what a "checkpoint" holds is up to each game.
+// A checkpoint typed in by hand, for when a save is lost: what a "checkpoint" holds is up to
+// each game. Hidden so nobody is tempted to cheat: tap "Settings" 5 times and enter the code.
+hiddenUnlock(dialog.querySelector('h2'), { onUnlock: () => ($('manual-section').hidden = false) })
 $('manual').value = progress.popped
 $('set-manual').addEventListener('click', () => {
   const n = Math.max(0, Math.floor(Number($('manual').value) || 0))

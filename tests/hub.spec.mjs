@@ -1,4 +1,8 @@
+import { readFileSync } from 'node:fs'
 import { expect, test } from '@playwright/test'
+
+// The family code lives only in private/ (gitignored), never in the public repo.
+const FAMILY_CODE = process.env.HUB_CODE ?? readFileSync(new URL('../private/family-code.txt', import.meta.url), 'utf8').trim()
 
 // Waits until the offline helper is installed and in charge of the page.
 async function readyOffline(page) {
@@ -95,6 +99,18 @@ test('progress moves by transfer code and by hand', async ({ page }) => {
   await page.goto('/games/bubbles/')
   await page.getByRole('button', { name: 'Tap to Start' }).click()
   await page.getByRole('button', { name: 'Settings' }).click()
+
+  // Setting progress by hand is hidden: 5 taps on the heading, then the family code.
+  await expect(page.getByLabel('Bubbles popped')).toBeHidden()
+  const heading = page.getByRole('heading', { name: 'Settings' })
+  for (let i = 0; i < 5; i++) await heading.click()
+  await page.getByLabel('Code').fill('0000')
+  await page.getByRole('button', { name: 'OK' }).click()
+  await expect(page.getByLabel('Code')).toHaveAttribute('placeholder', 'Not quite. Try again')
+  await expect(page.getByLabel('Bubbles popped')).toBeHidden()
+  await page.getByLabel('Code').fill(FAMILY_CODE)
+  await page.getByRole('button', { name: 'OK' }).click()
+  await expect(page.getByLabel('Bubbles popped')).toBeVisible()
 
   await page.getByLabel('Bubbles popped').fill('42')
   await page.getByRole('button', { name: 'Set', exact: true }).click()
