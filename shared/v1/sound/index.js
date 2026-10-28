@@ -25,6 +25,7 @@ export { DIALS } from './composer.js'
 const LOOKAHEAD = 1.5 // seconds scheduled ahead; covers timer throttling when the tab is hidden
 const TICK_MS = 250
 const LAYER_FADE = 1.5 // time constant for crossfading nature layers
+const SLEEP_FADE_S = 120 // the sleep timer's slow fade (from Quiet Words)
 
 // Sliders feel even when gain follows the square of their position.
 const curve = (v) => v * v
@@ -40,6 +41,9 @@ export class Sound {
     this.style = null
     this.dials = {}
     this.mutedParts = []
+    this.sleeping = false // after the sleep timer: everything stops until wake()
+    this.fading = false // the sleep timer's fade owns the master volume
+    this.sleepTimers = []
   }
 
   // Browsers only allow audio to start from a tap, so call this from the first one
@@ -140,12 +144,12 @@ export class Sound {
     if (!ctx) return
     const t = ctx.currentTime
     const v = this.volumes
-    this.master.gain.setTargetAtTime(this.muted ? 0 : 1, t, 0.3)
+    if (!this.sleeping && !this.fading) this.master.gain.setTargetAtTime(this.muted ? 0 : 1, t, 0.3)
     this.buses.notes.gain.setTargetAtTime(curve(v.notes), t, 0.1)
     this.buses.nature.gain.setTargetAtTime(curve(v.nature), t, 0.3)
     this.buses.music.gain.setTargetAtTime(curve(v.music), t, 0.3)
     // Don't spend battery generating what can't be heard.
-    const playing = this.musicOn && v.music > 0 && !this.muted
+    const playing = this.musicOn && v.music > 0 && !this.muted && !this.sleeping
     this.composer.setStyle(this.style)
     this.composer.setDials(this.dials)
     this.composer.setMuted(this.mutedParts)
@@ -153,7 +157,47 @@ export class Sound {
     else this.music.stop()
     if (playing && this.style) this.composer.start()
     else this.composer.stop()
-    this.crossfade(this.muted || v.nature === 0 ? {} : this.mix)
+    this.crossfade(this.muted || this.sleeping || v.nature === 0 ? {} : this.mix)
+  }
+
+  // Sleep timer: after `minutes`, everything fades out over two minutes, then stops until
+  // wake(). onFading and onAsleep let the page dim along with it. (Quiet Words' own, 2026-10-28.)
+  sleepIn(minutes, onFading, onAsleep) {
+    this.cancelSleep()
+    const fadeIn = Math.max(0, minutes * 60 - SLEEP_FADE_S) * 1000
+    this.sleepTimers.push(
+      setTimeout(() => {
+        onFading?.()
+        this.fading = true
+        const t = this.ctx?.currentTime ?? 0
+        this.master?.gain.cancelScheduledValues(t)
+        this.master?.gain.setValueAtTime(this.master.gain.value, t)
+        this.master?.gain.linearRampToValueAtTime(0, t + SLEEP_FADE_S)
+        this.sleepTimers.push(
+          setTimeout(() => {
+            this.sleeping = true
+            this.fading = false
+            this.refresh()
+            onAsleep?.()
+          }, SLEEP_FADE_S * 1000),
+        )
+      }, fadeIn),
+    )
+  }
+
+  cancelSleep() {
+    this.sleepTimers.forEach(clearTimeout)
+    this.sleepTimers = []
+  }
+
+  wake() {
+    this.cancelSleep()
+    this.sleeping = false
+    this.fading = false
+    if (this.ctx) {
+      this.master.gain.cancelScheduledValues(this.ctx.currentTime)
+      this.refresh()
+    }
   }
 
   // Fades each nature layer to its new level; silent layers are torn down once faded out.

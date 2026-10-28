@@ -9,6 +9,8 @@
 //   ▸ Nature sounds        folded: one slider per sound
 //   ▸ Move your progress   folded: transfer code and backup file
 //   ▸ Credits              folded
+//   Sleep timer      under Sound: Off / 15 / 30 / 60 minutes; sound fades, the screen dims
+//                    (not saved; every game's panel, not GameHub's)
 //   Reset to GameHub settings
 //   Grown-up tools   hidden: 5 taps on the heading + the family code
 //
@@ -46,6 +48,10 @@
 //                                              // no Music style row / Nature sounds fold, and
 //                                              // the panel leaves them alone; volumes still apply
 //     notesLabel: null,                        // no Game sounds slider (the game has none)
+//     placeNature: () => ({ birds: 0.5 }),     // nature sounds that follow the game's place, used
+//                                              // while the player hasn't made their own mix
+//                                              // (Quiet Words); call panel.applySound() when the
+//                                              // place changes. Needs defaults: { nature: null }.
 //   })
 //   panel.open()
 //   panel.settings.section = 'easy'; panel.saveOwn()  // a game's own choice changed outside the panel
@@ -157,7 +163,7 @@ export function note(text) {
 // --- The panel ------------------------------------------------------------------------------------
 
 export class SettingsPanel {
-  constructor({ gameId, title = 'Settings', store, sound, notesLabel = 'Game sounds', defaults = {}, look, sections = [], manual, credits, onChange, beforeExport, onRestore, exportData, keepOnReset = [], global = false, intro, owns = [] }) {
+  constructor({ gameId, title = 'Settings', store, sound, notesLabel = 'Game sounds', defaults = {}, look, sections = [], manual, credits, onChange, beforeExport, onRestore, exportData, keepOnReset = [], global = false, intro, owns = [], placeNature }) {
     this.gameId = gameId
     this.store = store
     this.sound = sound
@@ -168,6 +174,8 @@ export class SettingsPanel {
     this.keepOnReset = keepOnReset
     this.global = global
     this.owns = owns
+    this.placeNature = placeNature
+    this.sleepMinutes = null
     this.parts = { notesLabel, look, sections, manual, credits, intro }
     this.defaults = layer(SHARED_DEFAULTS, defaults)
     this.settings = {}
@@ -205,6 +213,8 @@ export class SettingsPanel {
   // (Re)builds the sections, so every control shows the current settings (after a reset).
   render() {
     const { notesLabel, look, sections, manual, credits, intro } = this.parts
+    // Dropdowns that were open stay open.
+    this.openFolds = new Set([...this.body.querySelectorAll('details[open] > summary')].map((s) => s.textContent))
     this.body.replaceChildren()
     if (intro) this.body.append(note(intro))
     this.addLight(look)
@@ -298,11 +308,16 @@ export class SettingsPanel {
     if (!sound) return
     sound.setVolumes(s.volumes)
     sound.setMuted(s.muted)
-    if (!this.owns.includes('nature')) sound.setNature(s.nature)
+    if (!this.owns.includes('nature')) sound.setNature(this.natureMix())
     if (this.owns.includes('music')) return
     const style = s.music === QUIET_WORDS_MUSIC ? null : STYLES.find((st) => st.id === s.music) ?? null
     sound.setStyle(style, style?.dials ?? {})
     sound.setMusic(s.volumes.music > 0)
+  }
+
+  // The nature sounds playing: the player's mix, or the place's while they haven't made one.
+  natureMix() {
+    return this.settings.nature ?? this.placeNature?.() ?? {}
   }
 
   open() {
@@ -331,6 +346,7 @@ export class SettingsPanel {
     const inner = make('div', { className: 'hub-fold-body' })
     const box = make('details', { className: 'hub-fold' }, make('summary', { textContent: title }), inner)
     if (onOpen) box.addEventListener('toggle', () => box.open && onOpen(inner))
+    box.open = !!this.openFolds?.has(title)
     this.body.append(make('section', { className: 'hub-settings-section' }, box))
     return inner
   }
@@ -374,6 +390,7 @@ export class SettingsPanel {
       vol('music', 'Music'),
       this.owns.includes('music') ? null : this.musicStyle(),
       toggle({ label: 'Mute everything', checked: this.settings.muted, onToggle: (muted) => this.set({ muted }) }),
+      this.global || !this.sound?.sleepIn ? null : this.sleepTimer(),
     ]
     el.append(...rows.filter(Boolean))
   }
@@ -388,21 +405,72 @@ export class SettingsPanel {
     return make('label', { className: 'hub-row' }, make('span', { textContent: 'Music style' }), select)
   }
 
+  // Sleep timer: after the minutes chosen the sound fades out over two minutes and the screen
+  // dims with it; a tap wakes everything. A moment's choice, so it isn't saved.
+  sleepTimer() {
+    const row = make('div', { className: 'hub-row hub-sleep-row' })
+    row.append(
+      labelWithHint('Sleep timer', 'Sound fades out gently, then the screen dims'),
+      choice({
+        label: 'Sleep timer',
+        value: this.sleepMinutes,
+        options: [null, 15, 30, 60].map((m) => ({ value: m, label: m ? `${m}m` : 'Off' })),
+        onPick: (m) => this.sleep(m),
+      }),
+    )
+    return row
+  }
+
+  sleep(minutes) {
+    this.sleepMinutes = minutes
+    this.dim?.remove()
+    this.dim = null
+    if (!minutes) return this.sound.wake()
+    const dim = make('div', { className: 'hub-sleep' })
+    const wake = () => {
+      this.sleep(null)
+      this.render()
+    }
+    dim.addEventListener('click', wake)
+    this.sound.sleepIn(
+      minutes,
+      () => {
+        dim.classList.add('fading')
+        document.body.append(dim)
+        this.dim = dim
+      },
+      () => {
+        dim.classList.replace('fading', 'asleep')
+        dim.append(make('p', { textContent: 'Sleep well · tap to wake' }))
+      },
+    )
+  }
+
   addNature() {
     const el = this.fold('Nature sounds')
-    el.append(note('Slide any of them up to hear it.'))
+    const following = this.placeNature && this.settings.nature == null
+    el.append(note(following ? 'These follow each place. Move a slider to make your own mix.' : 'Slide any of them up to hear it.'))
+    const mix = this.natureMix()
     for (const layer of LAYERS) {
       el.append(
         slider({
           label: LAYER_LABELS[layer],
-          value: this.settings.nature[layer] ?? 0,
+          value: mix[layer] ?? 0,
           onInput: (v) => {
-            const nature = { ...this.settings.nature, [layer]: v }
+            const nature = { ...this.natureMix(), [layer]: v }
             if (!v) delete nature[layer]
             this.set({ nature })
           },
         }),
       )
+    }
+    if (this.placeNature && !following) {
+      const back = make('button', { type: 'button', className: 'hub-small-button', textContent: 'Follow each place again' })
+      back.addEventListener('click', () => {
+        this.set({ nature: null })
+        this.render()
+      })
+      el.append(back)
     }
   }
 

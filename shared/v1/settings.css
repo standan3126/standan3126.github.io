@@ -96,16 +96,85 @@
   display: none;
 }
 
+/* Sliders and checkboxes are drawn here in the game's colours, not left to the phone: the phone's
+   own are grey and white, which is blue light at night (found by Quiet Words' no-blue test). */
 .hub-row input[type='range'] {
   flex: 1;
   max-width: 200px;
-  accent-color: var(--hub-accent);
+  height: 28px;
+  margin: 0;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+.hub-row input[type='range']::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--hub-ink) 22%, transparent);
+}
+
+.hub-row input[type='range']::-moz-range-track {
+  height: 6px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--hub-ink) 22%, transparent);
+}
+
+.hub-row input[type='range']::-moz-range-progress {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--hub-accent);
+}
+
+.hub-row input[type='range']::-webkit-slider-thumb {
+  width: 24px;
+  height: 24px;
+  margin-top: -9px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--hub-accent);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.hub-row input[type='range']::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--hub-accent);
 }
 
 .hub-row input[type='checkbox'] {
-  width: 22px;
-  height: 22px;
-  accent-color: var(--hub-accent);
+  position: relative;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  margin: 0;
+  border: 2px solid color-mix(in srgb, var(--hub-ink) 35%, transparent);
+  border-radius: 7px;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+.hub-row input[type='checkbox']:checked {
+  border-color: var(--hub-accent);
+  background: var(--hub-accent);
+}
+
+.hub-row input[type='checkbox']:checked::after {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 2px;
+  width: 6px;
+  height: 12px;
+  border: solid var(--hub-accent-ink, #fff);
+  border-width: 0 3px 3px 0;
+  transform: rotate(45deg);
 }
 
 .hub-row input[type='number'],
@@ -286,4 +355,43 @@
   margin-top: 22px;
   padding-top: 14px;
   border-top: 1px solid var(--hub-line);
+}
+
+/* Sleep timer: the screen darkens over the same two minutes the sound fades (from Quiet Words). */
+.hub-sleep-row {
+  flex-wrap: wrap;
+}
+
+.hub-sleep-row .hub-choice {
+  flex-basis: 100%;
+}
+
+.hub-sleep {
+  position: fixed;
+  inset: 0;
+  z-index: 1001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  animation: hub-dim 120s linear forwards;
+}
+
+.hub-sleep.asleep {
+  animation: none;
+  opacity: 0.94;
+}
+
+.hub-sleep p {
+  color: #a86400;
+  font-style: italic;
+}
+
+@keyframes hub-dim {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.94;
+  }
 }

@@ -16,9 +16,9 @@ Contract version: **1** (2026-10-28), for toolbox `shared/v1/`.
 | Tap to Start | `kit.js` `tapToStart()` | The first tap, which lets sound play on iPhone. |
 | Phone layout | `kit.js` `setupPage()` | iPhone home-screen sizing (`html.ios-app`, `html.ios-solid-bar`, `--app-height`). |
 | Saves | `shared/v1/save.js` `gameStore(id)` | Small saved values under `<id>:<key>`; transfer codes and backup files. |
-| Settings | `shared/v1/settings.js` `SettingsPanel` | The one Settings panel: Light (Day/Night/Auto), sounds, music style, nature sounds, the game's own sections, Move your progress, Credits, Reset to GameHub settings, hidden grown-up tools. |
+| Settings | `shared/v1/settings.js` `SettingsPanel` | The one Settings panel: Light (Day/Night/Auto), sounds, music style, sleep timer, nature sounds, the game's own sections, Move your progress, Credits, Reset to GameHub settings, hidden grown-up tools. Its sliders and checkboxes are drawn in the game's colours, so Night has no blue. |
 | GameHub settings | the gear on the start page | Every game's starting point for the shared settings (below). A game saves only what the player changed in that game; Reset goes back to GameHub's. |
-| Sound | `shared/v1/sound/` `Sound` | Game sounds, nature sounds, music. The Music style list comes from the toolbox, so new music reaches every game at once. |
+| Sound | `shared/v1/sound/` `Sound` | Game sounds, nature sounds, music, the sleep timer's fade. The Music style list comes from the toolbox, so new music reaches every game at once. |
 | Hidden tools | `shared/v1/secret.js` | 5 taps on the Settings heading + the family code reveal set-progress-by-hand. |
 | Pan and zoom | `shared/v1/panzoom.js` | Pinch, drag and wheel zoom for a board on a canvas. |
 
@@ -37,7 +37,9 @@ toolbox defaults → the game's defaults → changed on GameHub → changed in t
    own settings go in `sections`; choices that aren't settings (saved colors, the open tab) go in
    `keepOnReset`. Changes made outside the panel are saved with `panel.saveOwn()`. A game whose
    music or nature sounds *are* the game (Melody Garden) says so with `owns: ['music', 'nature']`;
-   the panel then only sets how loud they are.
+   the panel then only sets how loud they are. A game whose nature sounds follow its places
+   (Quiet Words) gives `placeNature` and `defaults: { nature: null }`; the player's own mix,
+   or GameHub's, still wins.
 4. **Have a warm night look.** Night uses warm light only (no blue), set through `data-theme` and
    the `--hub-*` colours, and follows `panel.night` (Night, or Auto at night).
 5. **Keep saved data under its own name.** All games share one web address, so they share one
@@ -80,10 +82,12 @@ toolbox defaults → the game's defaults → changed on GameHub → changed in t
 | `melody-garden` | Melody Garden | hub repo, `/games/melody-garden/` | `melody-garden:*` (the page's styles and songs in `garden`) |
 | `arrowhead` | Arrowhead | `arrowhead` | `arrowhead:*` |
 | `love-to-color` | Love To Color | `love-to-color` | `love-to-color:*` |
-| `quiet-words` | Quiet Words | `quiet_words` | IndexedDB default database, keys `settings`, `progress`, `albums`, `photo:<id>`. **Not yet following rule 5**; moves to its own database when it joins the frame. |
+| `quiet-words` | Quiet Words | `quiet_words` | `quiet-words:*` (settings) and its own IndexedDB database `quiet-words` (progress, albums, photos). Saves in the shared default database were moved there on 2026-10-28. |
 | `momahjong` | Momahjong | `momahjong` | `jadeSanctuary_*` in localStorage (shared on purpose with the old `momajong` site). **Not yet following rule 5**; moves under `momahjong:` when it joins the frame. |
 
 ## 5. Log
 
+- 2026-10-28: Quiet Words joins (own database); the panel gets the sleep timer, `placeNature`,
+  and drawn sliders/checkboxes (the phone's own were grey and white at night).
 - 2026-10-28, version 1: first written down (the frame, the launch page, GameHub settings and
   Reset, saving under the game's name, test every game before a hub push).
