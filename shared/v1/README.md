@@ -12,12 +12,13 @@ Shared pieces any GameHub game can use. They are plain JavaScript modules served
 </script>
 ```
 
-`games/bubbles/` uses every piece and is the working example.
+`games/bubbles/` uses most pieces. Arrowhead (its own repo) is the example of the game frame and
+launch page: see "The game frame" in `../CLAUDE.md` (private) for the rules.
 
 | File | Gives you |
 |---|---|
-| `kit.css` | Calm colours (`--hub-*`), the Exit button and Tap to Start styles, the iPhone home-screen sizing fix |
-| `kit.js` | `setupPage()`, `addExitButton()`, `tapToStart()`, `isInstalled()`, `warmOffline()` (save a whole game for offline in the background) |
+| `kit.css` | Calm colours (`--hub-*`), the game frame and launch page layout (`.hub-corner`, `.hub-launch`, `.hub-play`, `.hub-levels`), the old Exit button, Tap to Start, the iPhone home-screen sizing fix |
+| `kit.js` | `setupPage()`, `gameFrame()` (Hub/Home top left, Settings gear top right; `setPage('launch'|'play')`), `addExitButton()` (older games, until they move to the frame), `tapToStart()`, `isInstalled()`, `warmOffline()` (save a whole game for offline in the background) |
 | `save.js` | `gameStore(id)` (saves with the game's name in front), transfer codes, backup files |
 | `panzoom.js` | `PanZoom`: pinch/drag/wheel zoom and pan for a board drawn on a canvas, taps told apart from drags (from Love To Color; used by Arrowhead) |
 | `settings.js` + `settings.css` | `SettingsPanel`: the one Settings panel every game uses, kept short: open are Light (Day/Night/Auto), Sound (sliders, Music style as one row, Mute) and the game's own sections; Nature sounds, Move your progress and Credits fold into closed dropdowns; hidden grown-up tools. Saves settings and plays them through `Sound`. Music = Quiet Words' music or any Melody Garden style. Helpers `toggle`, `slider`, `choice`, `note`. Used by Arrowhead, Calm Bubbles and Love To Color |
