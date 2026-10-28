@@ -207,17 +207,17 @@
   color: var(--hub-soft);
 }
 
-/* Credits: a closed dropdown at the end of the panel. */
-.hub-credits {
-  margin-top: 18px;
+/* Folded sections (Nature sounds, Move your progress, Credits): closed dropdowns. */
+.hub-fold {
+  margin-top: 10px;
   border-top: 1px solid var(--hub-line);
 }
 
-.hub-credits summary {
+.hub-fold summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 44px;
+  min-height: 48px;
   font-size: 0.82rem;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -227,18 +227,22 @@
   cursor: pointer;
 }
 
-.hub-credits summary::-webkit-details-marker {
+.hub-fold summary::-webkit-details-marker {
   display: none;
 }
 
-.hub-credits summary::after {
+.hub-fold summary::after {
   content: '▾';
   font-size: 1.1rem;
   transition: transform 0.2s ease;
 }
 
-.hub-credits[open] summary::after {
+.hub-fold[open] summary::after {
   transform: rotate(180deg);
+}
+
+.hub-fold-body {
+  padding-bottom: 8px;
 }
 
 .hub-credits-list {
@@ -259,4 +263,20 @@
 
 .hub-credits-list a {
   color: inherit;
+}
+
+.hub-select {
+  max-width: 200px;
+  min-height: 40px;
+  padding: 4px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--hub-line);
+  background: transparent;
+  color: var(--hub-ink);
+  font: inherit;
+}
+
+.hub-select option {
+  background: var(--hub-panel-solid, #fffcf5);
+  color: var(--hub-ink);
 }

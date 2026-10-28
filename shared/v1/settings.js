@@ -1,16 +1,18 @@
-// One Settings panel for every GameHub game, so they all look and work alike. The order follows
-// Quiet Words:
+// One Settings panel for every GameHub game, so they all look and work alike. Kept short on
+// purpose: what people change often is open, what they rarely need is folded away.
 //
 //   Light            Day / Night / Auto (night by the clock); Night is warm light only.
 //                    The game may add its own look options here (look).
-//   [game sections]  e.g. Love To Color's sections (place: 'look')
-//   Sound            Game sounds, Nature sounds, Music sliders; Mute everything
-//   Music            Quiet Words' music or a Melody Garden style
-//   Nature sounds    one slider per sound
-//   [game sections]  e.g. how play works, little games (place: 'play', the default)
-//   Move your progress   transfer code and backup file
-//   Credits          closed dropdown, so long credit lists don't take up the panel
+//   [game sections]  place: 'look'
+//   Sound            Game sounds, Nature sounds, Music sliders; Music style; Mute everything
+//   [game sections]  e.g. how play works (place: 'play', the default)
+//   ▸ Nature sounds        folded: one slider per sound
+//   ▸ Move your progress   folded: transfer code and backup file
+//   ▸ Credits              folded
 //   Grown-up tools   hidden: 5 taps on the heading + the family code
+//
+// (Before 2026-10-27 Music and Nature sounds were open sections, as in Quiet Words, which keeps
+// that longer layout for now so the user can compare.)
 //
 // It saves the settings (in the game's store, key "settings") and plays the sound settings
 // through the toolbox Sound by itself. Use with settings.css.
@@ -25,7 +27,9 @@
 //     beforeExport: () => saveNow(),           // write the latest save before a code or backup
 //     onRestore: (data) => { ... },            // after a code or backup file replaced the save
 //     credits: ['Made for GameHub.', ...],     // lines (text or elements), or a function giving
-//   })                                         // them (called when the dropdown opens)
+//                                              // them (called when the dropdown opens)
+//     exportData: () => store.all(),           // what a code or backup holds (default: everything)
+//   })
 //   panel.open()
 
 import { hiddenUnlock } from './secret.js'
@@ -110,13 +114,14 @@ export function note(text) {
 // --- The panel ------------------------------------------------------------------------------------
 
 export class SettingsPanel {
-  constructor({ gameId, title = 'Settings', store, sound, notesLabel = 'Game sounds', defaults = {}, look, sections = [], manual, credits, onChange, beforeExport, onRestore }) {
+  constructor({ gameId, title = 'Settings', store, sound, notesLabel = 'Game sounds', defaults = {}, look, sections = [], manual, credits, onChange, beforeExport, onRestore, exportData }) {
     this.gameId = gameId
     this.store = store
     this.sound = sound
     this.onChange = onChange
     this.onRestore = onRestore
     this.beforeExport = beforeExport
+    this.exportData = exportData ?? (() => store.all())
     this.defaults = { ...SHARED_DEFAULTS, ...defaults }
     this.settings = this.load()
     this.night = isNight(this.settings)
@@ -135,12 +140,15 @@ export class SettingsPanel {
     this.addLight(look)
     for (const s of sections.filter((s) => s.place === 'look')) this.addSection(s)
     this.addSound(notesLabel)
-    this.addMusic()
-    this.addNature()
     for (const s of sections.filter((s) => s.place !== 'look')) this.addSection(s)
+    this.addNature()
     this.addProgress()
     if (credits) this.addCredits(credits)
     if (manual) this.addManual(manual, heading)
+    // Messages (code copied, progress restored...) show at the bottom, even with a section folded.
+    this.message = make('p', { className: 'hub-message' })
+    this.message.setAttribute('role', 'status')
+    this.body.append(this.message)
     document.body.append(dialog)
 
     this.applySound()
@@ -207,6 +215,15 @@ export class SettingsPanel {
     build(this.section(title), this)
   }
 
+  // A closed dropdown section, for things people rarely need. onOpen runs each time it opens.
+  fold(title, onOpen) {
+    const inner = make('div', { className: 'hub-fold-body' })
+    const box = make('details', { className: 'hub-fold' }, make('summary', { textContent: title }), inner)
+    if (onOpen) box.addEventListener('toggle', () => box.open && onOpen(inner))
+    this.body.append(make('section', { className: 'hub-settings-section' }, box))
+    return inner
+  }
+
   addLight(look) {
     const el = this.section('Light')
     const times = make('div', { className: 'hub-row' })
@@ -244,21 +261,24 @@ export class SettingsPanel {
       vol('notes', notesLabel),
       vol('nature', 'Nature sounds'),
       vol('music', 'Music'),
+      this.musicStyle(),
       toggle({ label: 'Mute everything', checked: this.settings.muted, onToggle: (muted) => this.set({ muted }) }),
     )
   }
 
-  addMusic() {
-    const el = this.section('Music')
+  // One row: the phone's own picker, with Quiet Words' music and every Melody Garden style.
+  musicStyle() {
     const options = [{ value: QUIET_WORDS_MUSIC, label: 'Quiet Words' }, ...STYLES.map((s) => ({ value: s.id, label: s.name }))]
     const value = options.some((o) => o.value === this.settings.music) ? this.settings.music : QUIET_WORDS_MUSIC
-    const picker = choice({ label: 'Music', options, value, onPick: (music) => this.set({ music }) })
-    picker.classList.add('hub-choice-wrap')
-    el.append(picker, note('Slide Music up to hear it. More styles come from Melody Garden.'))
+    const select = make('select', { className: 'hub-select' }, ...options.map((o) => make('option', { value: o.value, textContent: o.label })))
+    select.value = value
+    select.addEventListener('change', () => this.set({ music: select.value }))
+    return make('label', { className: 'hub-row' }, make('span', { textContent: 'Music style' }), select)
   }
 
   addNature() {
-    const el = this.section('Nature sounds')
+    const el = this.fold('Nature sounds')
+    el.append(note('Slide any of them up to hear it.'))
     for (const layer of LAYERS) {
       el.append(
         slider({
@@ -279,7 +299,7 @@ export class SettingsPanel {
   }
 
   addProgress() {
-    const el = this.section('Move your progress')
+    const el = this.fold('Move your progress')
     const code = make('textarea', { className: 'hub-code', rows: 3, placeholder: 'Transfer code', hidden: true })
     const use = make('button', { type: 'button', className: 'hub-small-button', textContent: 'Use this code', hidden: true })
     const button = (text, onClick) => {
@@ -306,7 +326,7 @@ export class SettingsPanel {
           this.beforeExport?.()
           code.hidden = false
           use.hidden = true
-          code.value = makeTransferCode(this.gameId, this.store.all())
+          code.value = makeTransferCode(this.gameId, this.exportData())
           code.select()
           try {
             await navigator.clipboard.writeText(code.value)
@@ -324,7 +344,7 @@ export class SettingsPanel {
         }),
         button('Save backup file', () => {
           this.beforeExport?.()
-          saveBackupFile(this.gameId, this.store.all())
+          saveBackupFile(this.gameId, this.exportData())
         }),
         button('Load backup file', async () => {
           try {
@@ -344,21 +364,16 @@ export class SettingsPanel {
         this.say(e.message)
       }
     })
-    this.message = make('p', { className: 'hub-message' })
-    this.message.setAttribute('role', 'status')
-    el.append(this.message)
+
   }
 
-  // A closed dropdown; its lines are filled in each time it opens (they may come from a file).
+  // Its lines are filled in each time it opens (they may come from a file).
   addCredits(credits) {
-    const list = make('div', { className: 'hub-credits-list' })
-    const box = make('details', { className: 'hub-credits' }, make('summary', { textContent: 'Credits' }), list)
-    box.addEventListener('toggle', async () => {
-      if (!box.open) return
+    this.fold('Credits', async (list) => {
+      list.classList.add('hub-credits-list')
       const lines = typeof credits === 'function' ? await credits() : credits
       list.replaceChildren(...[].concat(lines).map((line) => (typeof line === 'string' ? make('p', { textContent: line }) : line)))
     })
-    this.body.append(make('section', { className: 'hub-settings-section' }, box))
   }
 
   // Setting progress by hand (hidden). fields: [{ id, label, min, get }]; onSet({ id: number }).
