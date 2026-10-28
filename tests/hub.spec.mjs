@@ -171,6 +171,16 @@ test('calm bubbles uses the shared settings panel: order, night, credits, old se
   expect(settings.music).toBe('quiet-words')
   expect(settings.nature).toEqual({ rain: 0.45 })
 
+  // The toolbox frame: Hub top left, the drawn gear top right, the count clear of both.
+  await expect(page.locator('.hub-corner', { hasText: 'Hub' })).toBeVisible()
+  await expect(page.locator('.hub-corner', { hasText: 'Home' })).toBeHidden()
+  const gear = await page.locator('.hub-gear').boundingBox()
+  const count = await page.locator('.count').boundingBox()
+  const hub = await page.locator('.hub-corner', { hasText: 'Hub' }).boundingBox()
+  expect(count.x + count.width).toBeLessThan(gear.x)
+  expect(count.x).toBeGreaterThan(hub.x + hub.width)
+  expect(count.y).toBe(gear.y)
+
   await page.getByRole('button', { name: 'Settings' }).click()
   const sections = await page.locator('.hub-settings-section > h3:visible, .hub-fold summary').allTextContents()
   expect(sections).toEqual(['Light', 'Sound', 'Nature sounds', 'Move your progress', 'Credits'])

@@ -1,7 +1,7 @@
 // Calm Bubbles: the hub's test game. It exists to prove every shared piece works on a real
-// phone (Exit to Hub, Tap to Start, sound, saves, transfer codes, offline), so it uses the
+// phone (the game frame, Tap to Start, sound, saves, transfer codes, offline), so it uses the
 // toolbox for everything and adds only the bubbles.
-import { addExitButton, setupPage, tapToStart } from '/shared/v1/kit.js'
+import { gameFrame, setupPage, tapToStart } from '/shared/v1/kit.js'
 import { gameStore } from '/shared/v1/save.js'
 import { SettingsPanel } from '/shared/v1/settings.js'
 import { Sound } from '/shared/v1/sound/index.js'
@@ -28,7 +28,8 @@ const saveProgress = () => store.set('progress', progress)
 showProgress()
 
 setupPage()
-addExitButton({ beforeExit: saveProgress })
+// The toolbox frame: Hub top left, the Settings gear top right. No launch page, so always Hub.
+gameFrame({ onSettings: () => panel.open(), beforeExit: saveProgress })
 
 // --- The pond -----------------------------------------------------------------------------------
 
@@ -172,8 +173,6 @@ function applyLight() {
   document.documentElement.dataset.theme = panel.night ? 'night' : 'day'
 }
 applyLight()
-
-$('open-settings').addEventListener('click', () => panel.open())
 
 // --- Start --------------------------------------------------------------------------------------
 
