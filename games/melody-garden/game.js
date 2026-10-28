@@ -5,18 +5,29 @@
 // My songs: a style with its sliders, resting players and nature sounds, saved under a name.
 // A song's code can go to another phone, or to Claude to add to the toolbox (styles.js SONGS),
 // so any game can play it.
-import { addExitButton, setupPage, tapToStart } from '/shared/v1/kit.js'
+import { gameFrame, setupPage, tapToStart } from '/shared/v1/kit.js'
 import { gameStore, makeTransferCode, readTransferCode } from '/shared/v1/save.js'
+import { SettingsPanel } from '/shared/v1/settings.js'
 import { DIALS, LAYER_LABELS, LAYERS, Sound, STYLES } from '/shared/v1/sound/index.js'
 
 const GAME_ID = 'melody-garden'
 const store = gameStore(GAME_ID)
-// styles: per style, the dials and the players resting, so each style keeps its own sound.
-// song: the id of the chosen song in songs (null when a style is chosen).
-const settings = { style: STYLES[0].id, styles: {}, nature: null, volume: 0.7, playing: true, song: null, songs: [], ...store.get('settings', {}) }
-const saveSettings = () => store.set('settings', settings)
+// The garden: what's on the page, saved under "garden". styles: per style, the dials and the
+// players resting, so each style keeps its own sound. song: the id of the chosen song in songs
+// (null when a style is chosen). Before 2026-10-28 it was saved under "settings" with a volume;
+// that key now belongs to the shared Settings panel, and the volume became its Music slider.
+const old = store.get('settings', null)
+if (!store.get('garden', null) && old && ('style' in old || 'songs' in old)) {
+  const { volume, ...rest } = old
+  store.set('garden', rest)
+  if (volume === undefined) store.remove('settings')
+  else store.set('settings', { volumes: { music: volume } })
+}
+const NEW_GARDEN = () => ({ style: STYLES[0].id, styles: {}, nature: null, playing: true, song: null, songs: [] })
+let garden = { ...NEW_GARDEN(), ...store.get('garden', {}) }
+const saveGarden = () => store.set('garden', garden)
 
-const sound = new Sound({ notes: 0, nature: 0.8, music: settings.volume })
+const sound = new Sound({ notes: 0, nature: 0.8, music: 0.7 })
 const $ = (id) => document.getElementById(id)
 const el = (tag, props = {}) => Object.assign(document.createElement(tag), props)
 
@@ -30,15 +41,15 @@ const DIAL_LABELS = [
 ]
 
 // A style that's no longer in the toolbox (Canyon Flute, retired 2026-10-27) falls back to the first.
-if (!STYLES.some((s) => s.id === settings.style)) settings.style = STYLES[0].id
-const song = () => settings.songs.find((s) => s.id === settings.song)
-const current = () => STYLES.find((s) => s.id === (song()?.from ?? settings.style)) || STYLES[0]
-settings.nature ||= { ...current().nature }
-// What the dials and players change: the chosen song, or this style's own settings.
+if (!STYLES.some((s) => s.id === garden.style)) garden.style = STYLES[0].id
+const song = () => garden.songs.find((s) => s.id === garden.song)
+const current = () => STYLES.find((s) => s.id === (song()?.from ?? garden.style)) || STYLES[0]
+garden.nature ||= { ...current().nature }
+// What the dials and players change: the chosen song, or this style's own garden.
 function mine(style) {
   if (song()) return song()
-  settings.styles[style.id] ||= { dials: { ...DIALS, ...style.dials }, off: style.parts.filter((p) => p.off).map((p) => p.id) }
-  return settings.styles[style.id]
+  garden.styles[style.id] ||= { dials: { ...DIALS, ...style.dials }, off: style.parts.filter((p) => p.off).map((p) => p.id) }
+  return garden.styles[style.id]
 }
 
 // --- Styles ------------------------------------------------------------------------------------
@@ -48,7 +59,7 @@ function renderStyles() {
     ...STYLES.map((style) => {
       const card = el('button', { type: 'button', className: 'style-card' })
       card.setAttribute('role', 'radio')
-      card.setAttribute('aria-checked', String(!song() && style.id === settings.style))
+      card.setAttribute('aria-checked', String(!song() && style.id === garden.style))
       card.style.setProperty('--tint', style.color)
       card.append(el('span', { className: 'style-icon', textContent: style.icon, ariaHidden: 'true' }), el('strong', { textContent: style.name }), el('span', { className: 'style-blurb', textContent: style.blurb }))
       card.addEventListener('click', () => pickStyle(style))
@@ -58,13 +69,13 @@ function renderStyles() {
 }
 
 function pickStyle(style) {
-  const changed = style.id !== settings.style || song()
-  settings.style = style.id
-  settings.song = null
+  const changed = style.id !== garden.style || song()
+  garden.style = style.id
+  garden.song = null
   // Each style brings its own nature sounds along; the player can change them after.
-  if (changed) settings.nature = { ...style.nature }
-  settings.playing = true
-  saveSettings()
+  if (changed) garden.nature = { ...style.nature }
+  garden.playing = true
+  saveGarden()
   render()
   play()
 }
@@ -91,7 +102,7 @@ function renderDials() {
       dial(d.name, my.dials[d.id], d.ends, (v) => {
         my.dials[d.id] = v
         sound.setDials({ [d.id]: v })
-        saveSettings()
+        saveGarden()
       }),
     ),
   )
@@ -116,22 +127,22 @@ function renderPlayers() {
       chip(part.label, !my.off.includes(part.id), (on) => {
         my.off = on ? my.off.filter((id) => id !== part.id) : [...my.off, part.id]
         sound.setMutedParts(my.off)
-        saveSettings()
+        saveGarden()
       }),
     ),
   )
 }
 
 function renderNature() {
-  const mix = settings.nature
+  const mix = garden.nature
   $('nature').replaceChildren(
     ...LAYERS.map((name) =>
       chip(LAYER_LABELS[name], !!mix[name], (on) => {
-        if (on) settings.nature[name] = 0.35
-        else delete settings.nature[name]
-        if (song()) song().nature = { ...settings.nature }
-        sound.setNature(settings.nature)
-        saveSettings()
+        if (on) garden.nature[name] = 0.35
+        else delete garden.nature[name]
+        if (song()) song().nature = { ...garden.nature }
+        sound.setNature(garden.nature)
+        saveGarden()
       }),
     ),
   )
@@ -139,17 +150,10 @@ function renderNature() {
 
 $('reset').addEventListener('click', () => {
   const style = current()
-  delete settings.styles[style.id]
-  saveSettings()
+  delete garden.styles[style.id]
+  saveGarden()
   render()
   play()
-})
-
-$('volume').value = settings.volume
-$('volume').addEventListener('input', (e) => {
-  settings.volume = Number(e.target.value)
-  sound.setVolumes({ music: settings.volume })
-  saveSettings()
 })
 
 // --- Playing -----------------------------------------------------------------------------------
@@ -160,22 +164,24 @@ function play() {
   sound.unlock()
   sound.setMutedParts(my.off)
   sound.setStyle(style, my.dials)
-  sound.setNature(settings.nature)
-  sound.setMusic(settings.playing)
+  sound.setNature(garden.nature)
+  sound.setMusic(garden.playing)
   showPlaying()
 }
 
 function showPlaying() {
-  $('play').classList.toggle('playing', settings.playing)
-  $('play').setAttribute('aria-label', settings.playing ? 'Pause' : 'Play')
-  $('nowLabel').textContent = settings.playing ? 'Playing' : 'Paused'
+  $('play').classList.toggle('playing', garden.playing)
+  $('play').setAttribute('aria-label', garden.playing ? 'Pause' : 'Play')
+  const { volumes, muted } = panel.settings
+  const quiet = muted || volumes.music === 0
+  $('nowLabel').textContent = !garden.playing ? 'Paused' : quiet ? 'Music is turned down in Settings' : 'Playing'
   $('nowName').textContent = song()?.name ?? current().name
   $('reset').hidden = !!song()
 }
 
 $('play').addEventListener('click', () => {
-  settings.playing = !settings.playing
-  saveSettings()
+  garden.playing = !garden.playing
+  saveGarden()
   play()
 })
 
@@ -186,12 +192,12 @@ const round = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, Ma
 
 function renderSongs() {
   $('songs').replaceChildren(
-    ...settings.songs.map((s) => {
+    ...garden.songs.map((s) => {
       const style = STYLES.find((x) => x.id === s.from) || STYLES[0]
       const card = el('div', { className: 'song-card' })
       card.style.setProperty('--tint', style.color)
       const open = el('button', { type: 'button', className: 'song-open' })
-      open.setAttribute('aria-pressed', String(s.id === settings.song))
+      open.setAttribute('aria-pressed', String(s.id === garden.song))
       open.append(el('span', { className: 'style-icon', textContent: style.icon }), el('strong', { textContent: s.name }), el('span', { className: 'style-blurb', textContent: style.name }))
       open.addEventListener('click', () => pickSong(s))
       const copy = el('button', { type: 'button', className: 'small-button', textContent: 'Copy code' })
@@ -200,9 +206,9 @@ function renderSongs() {
       remove.setAttribute('aria-label', `Delete ${s.name}`)
       remove.addEventListener('click', () => {
         if (!confirm(`Delete “${s.name}”?`)) return
-        settings.songs = settings.songs.filter((x) => x !== s)
-        if (settings.song === s.id) settings.song = null
-        saveSettings()
+        garden.songs = garden.songs.filter((x) => x !== s)
+        if (garden.song === s.id) garden.song = null
+        saveGarden()
         render()
         play()
       })
@@ -213,11 +219,11 @@ function renderSongs() {
 }
 
 function pickSong(s) {
-  settings.song = s.id
-  settings.style = s.from
-  settings.nature = { ...s.nature }
-  settings.playing = true
-  saveSettings()
+  garden.song = s.id
+  garden.style = s.from
+  garden.nature = { ...s.nature }
+  garden.playing = true
+  saveGarden()
   render()
   play()
 }
@@ -228,11 +234,11 @@ $('saveForm').addEventListener('submit', (e) => {
   if (!name) return note('Give your song a name first.')
   const style = current()
   const my = mine(style)
-  const s = { id: `song-${Date.now()}`, name, from: style.from ?? style.id, dials: round(my.dials), off: [...my.off], nature: round(settings.nature) }
-  settings.songs.push(s)
-  settings.song = s.id
+  const s = { id: `song-${Date.now()}`, name, from: style.from ?? style.id, dials: round(my.dials), off: [...my.off], nature: round(garden.nature) }
+  garden.songs.push(s)
+  garden.song = s.id
   $('songName').value = ''
-  saveSettings()
+  saveGarden()
   render()
   note(`Saved “${name}”.`)
 })
@@ -265,7 +271,7 @@ $('pasteAdd').addEventListener('click', () => {
     const style = STYLES.find((x) => x.id === data?.from)
     if (!style || typeof data.name !== 'string') throw new Error("That song's style isn't here yet.")
     const s = { id: `song-${Date.now()}`, name: data.name.slice(0, 30), from: style.from ?? style.id, dials: { ...DIALS, ...style.dials, ...data.dials }, off: Array.isArray(data.off) ? data.off : [], nature: data.nature || {} }
-    settings.songs.push(s)
+    garden.songs.push(s)
     $('codeArea').hidden = true
     note(`Added “${s.name}”.`)
     pickSong(s)
@@ -283,10 +289,40 @@ function render() {
   showPlaying()
 }
 
+// --- Settings (the shared panel, like every GameHub game) ----------------------------------
+
+// The page plays the music and nature sounds itself, so the panel only sets how loud (and Light).
+const panel = new SettingsPanel({
+  gameId: GAME_ID,
+  store,
+  sound,
+  owns: ['music', 'nature'],
+  notesLabel: null,
+  defaults: { volumes: { notes: 0, nature: 0.8, music: 0.7 } },
+  onChange: () => {
+    applyLight()
+    showPlaying()
+  },
+  beforeExport: saveGarden,
+  onRestore: () => {
+    garden = { ...NEW_GARDEN(), ...store.get('garden', {}) }
+    render()
+    play()
+  },
+  credits: ['Melody Garden was made for GameHub.', 'Every sound and all the music are made in code by the GameHub toolbox. Nothing is borrowed.'],
+})
+
+function applyLight() {
+  document.documentElement.dataset.theme = panel.night ? 'night' : 'day'
+  document.querySelector('meta[name="theme-color"]').content = panel.night ? '#1a0e06' : '#f4efe4'
+}
+applyLight()
+
 // For the browser tests.
-window.melodyGarden = { sound }
+window.melodyGarden = { sound, panel }
 
 setupPage()
-addExitButton({ beforeExit: saveSettings })
+// The toolbox frame: Hub top left, the Settings gear top right. No launch page, so always Hub.
+gameFrame({ onSettings: () => panel.open(), beforeExit: saveGarden })
 render()
 tapToStart({ title: 'Melody Garden', subtitle: 'Make your own calm music.', onStart: play })

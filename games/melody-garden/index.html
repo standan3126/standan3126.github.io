@@ -6,9 +6,10 @@
     <title>Melody Garden · GameHub</title>
     <meta name="theme-color" content="#f4efe4" />
     <link rel="stylesheet" href="/shared/v1/kit.css" />
+    <link rel="stylesheet" href="/shared/v1/settings.css" />
     <link rel="stylesheet" href="game.css" />
   </head>
-  <body>
+  <body class="hub-scrolls">
     <main class="garden">
       <h1>Melody Garden</h1>
       <p class="lead">Pick a style, then shape the music with the sliders.</p>
@@ -49,11 +50,6 @@
           <button type="button" class="small-button" id="pasteAdd">Add this song</button>
         </div>
         <p id="songNote" class="hint" role="status"></p>
-      </section>
-
-      <section>
-        <h2>Volume</h2>
-        <label class="dial"><span class="ends"><span>Quiet</span><span>Loud</span></span><input type="range" id="volume" min="0" max="1" step="0.05" aria-label="Volume" /></label>
       </section>
     </main>
 

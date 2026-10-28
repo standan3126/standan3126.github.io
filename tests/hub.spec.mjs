@@ -339,3 +339,35 @@ test('GameHub settings are every game’s starting point; the game has the final
   expect(await mine('bubbles')).toEqual({})
   expect(await page.evaluate(() => localStorage.getItem('bubbles:progress'))).toBe('{"popped":9}')
 })
+
+test('melody garden sits in the frame: the shared panel sets only how loud and Light; old saves carry over', async ({ page }) => {
+  await page.goto('/games/melody-garden/')
+  // A save from before 2026-10-28: the garden and its volume under "settings".
+  await page.evaluate(() => {
+    localStorage.clear()
+    localStorage.setItem('melody-garden:settings', JSON.stringify({ style: 'celtic', styles: {}, nature: { rain: 0.35 }, volume: 0.4, playing: true, song: null, songs: [{ id: 'song-1', name: 'Mine', from: 'garden', dials: {}, off: [], nature: {} }] }))
+  })
+  await page.reload()
+  await page.getByRole('button', { name: 'Tap to Start' }).click()
+  const saved = (key) => page.evaluate((key) => JSON.parse(localStorage.getItem(`melody-garden:${key}`)), key)
+  expect(await saved('garden')).toMatchObject({ style: 'celtic', songs: [{ name: 'Mine' }] })
+  expect((await saved('garden')).volume).toBeUndefined()
+  expect(await saved('my-settings')).toEqual({ volumes: { music: 0.4 } })
+  await expect(page.locator('#volume')).toHaveCount(0)
+
+  // The frame: Hub and the gear; the panel leaves the music style and nature mix to the page.
+  await expect(page.getByRole('button', { name: 'Exit to GameHub' })).toBeVisible()
+  await page.locator('.hub-gear').click()
+  const panel = page.locator('dialog.hub-settings')
+  await expect(panel.getByRole('slider', { name: 'Music' })).toHaveValue('0.4')
+  await expect(panel.getByLabel('Music style')).toHaveCount(0)
+  await expect(panel.getByRole('slider', { name: 'Game sounds' })).toHaveCount(0)
+  await expect(panel.locator('.hub-fold summary')).toHaveText(['Move your progress', 'Credits'])
+  await panel.getByRole('slider', { name: 'Music' }).fill('0')
+  await expect(page.locator('#nowLabel')).toHaveText('Music is turned down in Settings')
+  expect(await page.evaluate(() => window.melodyGarden.sound.style?.id)).toBe('celtic') // the page's style stays
+  await panel.getByRole('radio', { name: 'Night' }).click()
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'night')
+  const tint = await page.locator('.style-card').first().evaluate((el) => getComputedStyle(el).getPropertyValue('--tint').trim())
+  expect(tint).toBe('#c98f5a') // warm, never blue, at night
+})

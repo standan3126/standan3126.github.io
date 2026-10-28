@@ -42,6 +42,10 @@
 //                                              // them (called when the dropdown opens)
 //     exportData: () => store.all(),           // what a code or backup holds (default: everything)
 //     keepOnReset: ['myColors'],               // the game's own keys Reset leaves alone
+//     owns: ['music', 'nature'],               // the game plays these itself (Melody Garden):
+//                                              // no Music style row / Nature sounds fold, and
+//                                              // the panel leaves them alone; volumes still apply
+//     notesLabel: null,                        // no Game sounds slider (the game has none)
 //   })
 //   panel.open()
 //   panel.settings.section = 'easy'; panel.saveOwn()  // a game's own choice changed outside the panel
@@ -153,7 +157,7 @@ export function note(text) {
 // --- The panel ------------------------------------------------------------------------------------
 
 export class SettingsPanel {
-  constructor({ gameId, title = 'Settings', store, sound, notesLabel = 'Game sounds', defaults = {}, look, sections = [], manual, credits, onChange, beforeExport, onRestore, exportData, keepOnReset = [], global = false, intro }) {
+  constructor({ gameId, title = 'Settings', store, sound, notesLabel = 'Game sounds', defaults = {}, look, sections = [], manual, credits, onChange, beforeExport, onRestore, exportData, keepOnReset = [], global = false, intro, owns = [] }) {
     this.gameId = gameId
     this.store = store
     this.sound = sound
@@ -163,6 +167,7 @@ export class SettingsPanel {
     this.exportData = exportData ?? (() => store.all())
     this.keepOnReset = keepOnReset
     this.global = global
+    this.owns = owns
     this.parts = { notesLabel, look, sections, manual, credits, intro }
     this.defaults = layer(SHARED_DEFAULTS, defaults)
     this.settings = {}
@@ -206,7 +211,7 @@ export class SettingsPanel {
     for (const s of sections.filter((s) => s.place === 'look')) this.addSection(s)
     this.addSound(notesLabel)
     for (const s of sections.filter((s) => s.place !== 'look')) this.addSection(s)
-    this.addNature()
+    if (!this.owns.includes('nature')) this.addNature()
     if (!this.global) this.addProgress()
     if (credits) this.addCredits(credits)
     if (!this.global) this.addReset()
@@ -293,7 +298,8 @@ export class SettingsPanel {
     if (!sound) return
     sound.setVolumes(s.volumes)
     sound.setMuted(s.muted)
-    sound.setNature(s.nature)
+    if (!this.owns.includes('nature')) sound.setNature(s.nature)
+    if (this.owns.includes('music')) return
     const style = s.music === QUIET_WORDS_MUSIC ? null : STYLES.find((st) => st.id === s.music) ?? null
     sound.setStyle(style, style?.dials ?? {})
     sound.setMusic(s.volumes.music > 0)
@@ -362,13 +368,14 @@ export class SettingsPanel {
     const el = this.section('Sound')
     const vol = (key, label) =>
       slider({ label, value: this.settings.volumes[key], onInput: (v) => this.set({ volumes: { [key]: v } }) })
-    el.append(
-      vol('notes', notesLabel),
+    const rows = [
+      notesLabel ? vol('notes', notesLabel) : null,
       vol('nature', 'Nature sounds'),
       vol('music', 'Music'),
-      this.musicStyle(),
+      this.owns.includes('music') ? null : this.musicStyle(),
       toggle({ label: 'Mute everything', checked: this.settings.muted, onToggle: (muted) => this.set({ muted }) }),
-    )
+    ]
+    el.append(...rows.filter(Boolean))
   }
 
   // One row: the phone's own picker, with Quiet Words' music and every Melody Garden style.

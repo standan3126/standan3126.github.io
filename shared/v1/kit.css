@@ -150,6 +150,21 @@ html.ios-app body::before {
   height: 24px;
 }
 
+/* A page that scrolls under the frame: put class "hub-scrolls" on <body> and the content fades
+   out before it reaches Hub/Home and the gear. --hub-fade is the colour at the top of the page
+   (default: the page background). */
+body.hub-scrolls::after {
+  content: '';
+  position: fixed;
+  z-index: 998;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(env(safe-area-inset-top) + 66px);
+  background: linear-gradient(var(--hub-fade, var(--hub-bg)) 72%, transparent);
+  pointer-events: none;
+}
+
 /* A game's launch page: title at the top, the game's own choices in the middle (scrolls), and
    Play + Levels pinned at the bottom, so Play is in the same spot in every game. The Levels row
    is always kept (hidden, not removed) so Play never moves.

@@ -11,7 +11,7 @@ Contract version: **1** (2026-10-28), for toolbox `shared/v1/`.
 | Piece | Where | What it does |
 |---|---|---|
 | The app | `/manifest.json`, `/sw.js` | The one installable app and its offline helper. A game is saved for offline the first time it's played (cache `game-<id>`); `warmOffline(list)` saves the rest in the background. "Free up space" deletes only `game-<id>`, never saves. |
-| The frame | `shared/v1/kit.js` `gameFrame()`, `kit.css` | Hub (launch page) or Home (playing) top left; the Settings gear top right, never moving. |
+| The frame | `shared/v1/kit.js` `gameFrame()`, `kit.css` | Hub (launch page) or Home (playing) top left; the Settings gear top right, never moving. A page that scrolls puts `hub-scrolls` on `<body>` so content fades out before the buttons. |
 | The launch page | `kit.css` `.hub-launch`, `.hub-play`, `.hub-levels` | Title at the top, the game's own choices in the middle, Play and Levels pinned in the same spot in every game. |
 | Tap to Start | `kit.js` `tapToStart()` | The first tap, which lets sound play on iPhone. |
 | Phone layout | `kit.js` `setupPage()` | iPhone home-screen sizing (`html.ios-app`, `html.ios-solid-bar`, `--app-height`). |
@@ -35,7 +35,9 @@ toolbox defaults → the game's defaults → changed on GameHub → changed in t
 2. **Tap to Start** before any sound.
 3. **Use the shared Settings panel.** Never build its own music, sound or light controls. Its
    own settings go in `sections`; choices that aren't settings (saved colors, the open tab) go in
-   `keepOnReset`. Changes made outside the panel are saved with `panel.saveOwn()`.
+   `keepOnReset`. Changes made outside the panel are saved with `panel.saveOwn()`. A game whose
+   music or nature sounds *are* the game (Melody Garden) says so with `owns: ['music', 'nature']`;
+   the panel then only sets how loud they are.
 4. **Have a warm night look.** Night uses warm light only (no blue), set through `data-theme` and
    the `--hub-*` colours, and follows `panel.night` (Night, or Auto at night).
 5. **Keep saved data under its own name.** All games share one web address, so they share one
@@ -75,7 +77,7 @@ toolbox defaults → the game's defaults → changed on GameHub → changed in t
 |---|---|---|---|
 | `hub` | GameHub start page | `standan3126.github.io` | `hub:my-settings` (GameHub settings) |
 | `bubbles` | Calm Bubbles | hub repo, `/games/bubbles/` | `bubbles:*` |
-| `melody-garden` | Melody Garden | hub repo, `/games/melody-garden/` | `melody-garden:*` |
+| `melody-garden` | Melody Garden | hub repo, `/games/melody-garden/` | `melody-garden:*` (the page's styles and songs in `garden`) |
 | `arrowhead` | Arrowhead | `arrowhead` | `arrowhead:*` |
 | `love-to-color` | Love To Color | `love-to-color` | `love-to-color:*` |
 | `quiet-words` | Quiet Words | `quiet_words` | IndexedDB default database, keys `settings`, `progress`, `albums`, `photo:<id>`. **Not yet following rule 5**; moves to its own database when it joins the frame. |
