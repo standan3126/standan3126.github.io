@@ -120,7 +120,7 @@ test('progress moves by transfer code and by hand', async ({ page }) => {
   await expect(page.locator('#popped')).toHaveText('42')
 
   await page.getByRole('button', { name: 'Get transfer code' }).click()
-  const code = await page.locator('#code').inputValue()
+  const code = await page.locator('.hub-code').inputValue()
   expect(code).toMatch(/^GH1\.bubbles\./)
 
   // A fresh phone: clear everything, then paste the code.
@@ -130,12 +130,12 @@ test('progress moves by transfer code and by hand', async ({ page }) => {
   await expect(page.locator('#popped')).toHaveText('0')
   await page.getByRole('button', { name: 'Settings' }).click()
   await page.getByRole('button', { name: 'Enter a code' }).click()
-  await page.locator('#code').fill(code.slice(0, -3))
+  await page.locator('.hub-code').fill(code.slice(0, -3))
   await page.getByRole('button', { name: 'Use this code' }).click()
-  await expect(page.locator('#message')).toContainText('missing')
-  await page.locator('#code').fill(code)
+  await expect(page.locator('.hub-message')).toContainText('missing')
+  await page.locator('.hub-code').fill(code)
   await page.getByRole('button', { name: 'Use this code' }).click()
-  await expect(page.locator('#message')).toHaveText('Progress restored.')
+  await expect(page.locator('.hub-message')).toHaveText('Progress restored.')
   await expect(page.locator('#popped')).toHaveText('42')
 })
 
@@ -146,10 +146,41 @@ test('sound starts after the tap with no errors', async ({ page }) => {
   await page.goto('/games/bubbles/')
   await page.getByRole('button', { name: 'Tap to Start' }).click()
   await page.getByRole('button', { name: 'Settings' }).click()
-  await page.getByLabel('Music').check()
-  await page.getByRole('button', { name: 'Rain' }).click()
+  await page.getByRole('slider', { name: 'Music' }).fill('0.6')
+  await page.getByRole('slider', { name: 'Rain' }).fill('0.5')
+  await page.getByRole('radio', { name: 'Celtic', exact: false }).first().click()
   await page.waitForTimeout(1500)
   expect(errors).toEqual([])
+  const sound = await page.evaluate(() => ({ style: window.bubbles.sound.style?.id, music: window.bubbles.panel.settings.music }))
+  expect(sound.style).toBe(sound.music)
+})
+
+test('calm bubbles uses the shared settings panel: order, night, credits, old settings', async ({ page }) => {
+  await page.goto('/games/bubbles/')
+  // A save from before the shared panel: music was an on/off switch.
+  await page.evaluate(() =>
+    localStorage.setItem('bubbles:settings', JSON.stringify({ volumes: { notes: 0.4, nature: 0.6 }, music: true, nature: { rain: 0.45 } })),
+  )
+  await page.reload()
+  await page.getByRole('button', { name: 'Tap to Start' }).click()
+  const settings = await page.evaluate(() => window.bubbles.panel.settings)
+  expect(settings.volumes).toEqual({ notes: 0.4, nature: 0.6, music: 0.35 })
+  expect(settings.music).toBe('quiet-words')
+  expect(settings.nature).toEqual({ rain: 0.45 })
+
+  await page.getByRole('button', { name: 'Settings' }).click()
+  const sections = await page.locator('.hub-settings-section > h3:visible, .hub-credits summary').allTextContents()
+  expect(sections).toEqual(['Light', 'Sound', 'Music', 'Nature sounds', 'Move your progress', 'Credits'])
+  await expect(page.getByText('Calm Bubbles was made for GameHub.')).toBeHidden()
+  await page.locator('.hub-credits summary').click()
+  await expect(page.getByText('Calm Bubbles was made for GameHub.')).toBeVisible()
+
+  await page.getByRole('radio', { name: 'Night' }).click()
+  expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe('night')
+  const bg = await page.evaluate(() => getComputedStyle(document.querySelector('.hub-settings')).backgroundColor)
+  expect(bg).toBe('rgb(42, 24, 12)')
+  await page.reload()
+  expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe('night')
 })
 
 test('melody garden plays a style, and the dials, players and pause work', async ({ page }) => {

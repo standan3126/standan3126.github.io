@@ -206,3 +206,57 @@
   margin: 10px 0 0;
   color: var(--hub-soft);
 }
+
+/* Credits: a closed dropdown at the end of the panel. */
+.hub-credits {
+  margin-top: 18px;
+  border-top: 1px solid var(--hub-line);
+}
+
+.hub-credits summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--hub-soft);
+  list-style: none;
+  cursor: pointer;
+}
+
+.hub-credits summary::-webkit-details-marker {
+  display: none;
+}
+
+.hub-credits summary::after {
+  content: '▾';
+  font-size: 1.1rem;
+  transition: transform 0.2s ease;
+}
+
+.hub-credits[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.hub-credits-list {
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--hub-soft);
+}
+
+.hub-credits-list p,
+.hub-credits-list li {
+  margin: 0 0 6px;
+}
+
+.hub-credits-list ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.hub-credits-list a {
+  color: inherit;
+}

@@ -99,7 +99,7 @@ html.ios-app body::before {
   display: grid;
   place-items: center;
   padding: 24px;
-  background: rgba(244, 239, 228, 0.7);
+  background: var(--hub-veil, rgba(244, 239, 228, 0.7)); /* dark looks set a dark veil */
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   transition: opacity 0.4s ease;

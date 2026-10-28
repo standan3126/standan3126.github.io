@@ -9,6 +9,7 @@
 //   Nature sounds    one slider per sound
 //   [game sections]  e.g. how play works, little games (place: 'play', the default)
 //   Move your progress   transfer code and backup file
+//   Credits          closed dropdown, so long credit lists don't take up the panel
 //   Grown-up tools   hidden: 5 taps on the heading + the family code
 //
 // It saves the settings (in the game's store, key "settings") and plays the sound settings
@@ -23,7 +24,8 @@
 //     manual: { fields: [{ id: 'level', label: 'Level', get: () => 3 }], onSet: (values) => ... },
 //     beforeExport: () => saveNow(),           // write the latest save before a code or backup
 //     onRestore: (data) => { ... },            // after a code or backup file replaced the save
-//   })
+//     credits: ['Made for GameHub.', ...],     // lines (text or elements), or a function giving
+//   })                                         // them (called when the dropdown opens)
 //   panel.open()
 
 import { hiddenUnlock } from './secret.js'
@@ -108,7 +110,7 @@ export function note(text) {
 // --- The panel ------------------------------------------------------------------------------------
 
 export class SettingsPanel {
-  constructor({ gameId, title = 'Settings', store, sound, notesLabel = 'Game sounds', defaults = {}, look, sections = [], manual, onChange, beforeExport, onRestore }) {
+  constructor({ gameId, title = 'Settings', store, sound, notesLabel = 'Game sounds', defaults = {}, look, sections = [], manual, credits, onChange, beforeExport, onRestore }) {
     this.gameId = gameId
     this.store = store
     this.sound = sound
@@ -137,6 +139,7 @@ export class SettingsPanel {
     this.addNature()
     for (const s of sections.filter((s) => s.place !== 'look')) this.addSection(s)
     this.addProgress()
+    if (credits) this.addCredits(credits)
     if (manual) this.addManual(manual, heading)
     document.body.append(dialog)
 
@@ -150,7 +153,8 @@ export class SettingsPanel {
     const saved = this.store.get('settings', {})
     const s = { ...this.defaults, ...saved }
     s.volumes = { ...this.defaults.volumes, ...saved.volumes }
-    s.nature = { ...this.defaults.nature, ...saved.nature }
+    // A sound left out of a saved choice is off, so the game's starting sounds aren't mixed back in.
+    s.nature = { ...(saved.nature ?? this.defaults.nature) }
     return s
   }
 
@@ -343,6 +347,18 @@ export class SettingsPanel {
     this.message = make('p', { className: 'hub-message' })
     this.message.setAttribute('role', 'status')
     el.append(this.message)
+  }
+
+  // A closed dropdown; its lines are filled in each time it opens (they may come from a file).
+  addCredits(credits) {
+    const list = make('div', { className: 'hub-credits-list' })
+    const box = make('details', { className: 'hub-credits' }, make('summary', { textContent: 'Credits' }), list)
+    box.addEventListener('toggle', async () => {
+      if (!box.open) return
+      const lines = typeof credits === 'function' ? await credits() : credits
+      list.replaceChildren(...[].concat(lines).map((line) => (typeof line === 'string' ? make('p', { textContent: line }) : line)))
+    })
+    this.body.append(make('section', { className: 'hub-settings-section' }, box))
   }
 
   // Setting progress by hand (hidden). fields: [{ id, label, min, get }]; onSet({ id: number }).

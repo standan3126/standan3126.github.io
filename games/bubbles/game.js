@@ -2,23 +2,29 @@
 // phone (Exit to Hub, Tap to Start, sound, saves, transfer codes, offline), so it uses the
 // toolbox for everything and adds only the bubbles.
 import { addExitButton, setupPage, tapToStart } from '/shared/v1/kit.js'
-import { hiddenUnlock } from '/shared/v1/secret.js'
-import { gameStore, makeTransferCode, openBackupFile, readTransferCode, saveBackupFile } from '/shared/v1/save.js'
-import { LAYER_LABELS, LAYERS, Sound } from '/shared/v1/sound/index.js'
+import { gameStore } from '/shared/v1/save.js'
+import { SettingsPanel } from '/shared/v1/settings.js'
+import { Sound } from '/shared/v1/sound/index.js'
 
 const GAME_ID = 'bubbles'
 const store = gameStore(GAME_ID)
-const DEFAULTS = { volumes: { notes: 0.8, nature: 0.6 }, music: false, nature: { creek: 0.5, birds: 0.35 } }
 
 let progress = store.get('progress', { popped: 0 })
-const settings = { ...DEFAULTS, ...store.get('settings', {}) }
-const sound = new Sound({ ...settings.volumes, music: 0.5 })
+
+// Settings from before the shared panel (music on/off) move to its names: music plays when the
+// Music slider is above 0.
+const oldSettings = store.get('settings', null)
+if (oldSettings && typeof oldSettings.music === 'boolean') {
+  const volumes = { notes: 0.8, nature: 0.6, ...oldSettings.volumes, music: oldSettings.music ? 0.35 : 0 }
+  store.set('settings', { ...oldSettings, volumes, music: 'quiet-words' })
+}
+
+const sound = new Sound({ notes: 0.8, nature: 0.6, music: 0.35 })
 
 const $ = (id) => document.getElementById(id)
 const poppedLabel = $('popped')
 const showProgress = () => (poppedLabel.textContent = progress.popped)
 const saveProgress = () => store.set('progress', progress)
-const saveSettings = () => store.set('settings', settings)
 showProgress()
 
 setupPage()
@@ -30,7 +36,10 @@ const canvas = $('pond')
 const ctx = canvas.getContext('2d')
 const bubbles = []
 const ripples = []
-const TINTS = ['#9cc3c9', '#8fb39a', '#c9b48f', '#d6a7a0', '#a9a6cf']
+const DAY = { tints: ['#9cc3c9', '#8fb39a', '#c9b48f', '#d6a7a0', '#a9a6cf'], shine: '255,255,255', ripple: '111,148,128' }
+// Night: warm light only (amber, orange, rose), no blue.
+const NIGHT = { tints: ['#c98742', '#e0883a', '#b8693a', '#d9a066', '#a8573a'], shine: '255,214,170', ripple: '224,136,58' }
+let look = DAY
 let width = 0
 let height = 0
 let streak = 0
@@ -55,7 +64,7 @@ function addBubble(anywhere = false) {
     r,
     speed: 18 + Math.random() * 22, // pixels a second: slow and lazy
     sway: Math.random() * Math.PI * 2,
-    tint: TINTS[Math.floor(Math.random() * TINTS.length)],
+    tint: Math.floor(Math.random() * 5),
   })
 }
 for (let i = 0; i < 9; i++) addBubble(true)
@@ -78,9 +87,10 @@ function frame(now) {
     }
     b.drawX = x
     const g = ctx.createRadialGradient(x - b.r * 0.35, b.y - b.r * 0.35, b.r * 0.1, x, b.y, b.r)
-    g.addColorStop(0, 'rgba(255,255,255,0.95)')
-    g.addColorStop(0.55, b.tint + '88')
-    g.addColorStop(1, b.tint + 'cc')
+    const tint = look.tints[b.tint]
+    g.addColorStop(0, `rgba(${look.shine},0.95)`)
+    g.addColorStop(0.55, tint + '88')
+    g.addColorStop(1, tint + 'cc')
     ctx.fillStyle = g
     ctx.beginPath()
     ctx.arc(x, b.y, b.r, 0, Math.PI * 2)
@@ -94,7 +104,7 @@ function frame(now) {
       ripples.splice(i, 1)
       continue
     }
-    ctx.strokeStyle = `rgba(111,148,128,${0.6 * (1 - p.age / 0.6)})`
+    ctx.strokeStyle = `rgba(${look.ripple},${0.6 * (1 - p.age / 0.6)})`
     ctx.lineWidth = 2
     ctx.beginPath()
     ctx.arc(p.x, p.y, p.r + p.age * 60, 0, Math.PI * 2)
@@ -129,110 +139,41 @@ canvas.addEventListener('pointerdown', (e) => {
   if (progress.popped % 25 === 0) sound.celebrate()
 })
 
-// --- Settings -----------------------------------------------------------------------------------
+// --- Settings (the shared panel, like every GameHub game) ---------------------------------------
 
-const dialog = $('settings')
-const message = $('message')
-const say = (text) => (message.textContent = text)
-
-$('open-settings').addEventListener('click', () => {
-  say('')
-  dialog.showModal()
+const panel = new SettingsPanel({
+  gameId: GAME_ID,
+  store,
+  sound,
+  notesLabel: 'Pop sounds',
+  defaults: { volumes: { notes: 0.8, nature: 0.6, music: 0.35 }, nature: { creek: 0.5, birds: 0.35 } },
+  onChange: applyLight,
+  beforeExport: saveProgress,
+  onRestore: () => {
+    progress = store.get('progress', { popped: 0 })
+    showProgress()
+  },
+  // A checkpoint typed in by hand, for when a save is lost: what a "checkpoint" holds is up to
+  // each game. Hidden so nobody is tempted to cheat: tap "Settings" 5 times and enter the code.
+  manual: {
+    fields: [{ id: 'popped', label: 'Bubbles popped', get: () => progress.popped }],
+    onSet: ({ popped }) => {
+      progress = { ...progress, popped }
+      saveProgress()
+      showProgress()
+      return `Set to ${popped} popped.`
+    },
+  },
+  credits: ['Calm Bubbles was made for GameHub.', 'Every sound and all the music are made in code by the GameHub toolbox. Nothing is borrowed.'],
 })
 
-for (const name of ['notes', 'nature']) {
-  const slider = $(`vol-${name}`)
-  slider.value = settings.volumes[name]
-  slider.addEventListener('input', () => {
-    settings.volumes[name] = Number(slider.value)
-    sound.setVolumes({ [name]: settings.volumes[name] })
-    saveSettings()
-  })
+function applyLight() {
+  look = panel.night ? NIGHT : DAY
+  document.documentElement.dataset.theme = panel.night ? 'night' : 'day'
 }
+applyLight()
 
-$('music').checked = settings.music
-$('music').addEventListener('change', () => {
-  settings.music = $('music').checked
-  sound.setMusic(settings.music)
-  saveSettings()
-})
-
-const chips = $('nature')
-for (const layer of LAYERS) {
-  const chip = Object.assign(document.createElement('button'), { type: 'button', textContent: LAYER_LABELS[layer] })
-  chip.setAttribute('aria-pressed', String(Boolean(settings.nature[layer])))
-  chip.addEventListener('click', () => {
-    if (settings.nature[layer]) delete settings.nature[layer]
-    else settings.nature[layer] = 0.45
-    chip.setAttribute('aria-pressed', String(Boolean(settings.nature[layer])))
-    sound.setNature(settings.nature)
-    saveSettings()
-  })
-  chips.append(chip)
-}
-
-// Moving progress: everything this game saved travels together.
-function restore(data) {
-  store.replaceAll(data)
-  progress = store.get('progress', { popped: 0 })
-  showProgress()
-}
-
-const codeBox = $('code')
-const useCode = $('use-code')
-
-$('make-code').addEventListener('click', async () => {
-  codeBox.hidden = false
-  useCode.hidden = true
-  codeBox.value = makeTransferCode(GAME_ID, store.all())
-  codeBox.select()
-  try {
-    await navigator.clipboard.writeText(codeBox.value)
-    say('Code copied. Paste it into the game on the other phone or app.')
-  } catch {
-    say('Copy this code, then paste it into the game on the other phone or app.')
-  }
-})
-
-$('enter-code').addEventListener('click', () => {
-  codeBox.hidden = false
-  useCode.hidden = false
-  codeBox.value = ''
-  codeBox.focus()
-  say('')
-})
-
-useCode.addEventListener('click', () => {
-  try {
-    restore(readTransferCode(codeBox.value, GAME_ID))
-    say('Progress restored.')
-  } catch (e) {
-    say(e.message)
-  }
-})
-
-$('save-file').addEventListener('click', () => saveBackupFile(GAME_ID, store.all()))
-
-$('load-file').addEventListener('click', async () => {
-  try {
-    restore(await openBackupFile(GAME_ID))
-    say('Progress restored.')
-  } catch (e) {
-    say(e.message)
-  }
-})
-
-// A checkpoint typed in by hand, for when a save is lost: what a "checkpoint" holds is up to
-// each game. Hidden so nobody is tempted to cheat: tap "Settings" 5 times and enter the code.
-hiddenUnlock(dialog.querySelector('h2'), { onUnlock: () => ($('manual-section').hidden = false) })
-$('manual').value = progress.popped
-$('set-manual').addEventListener('click', () => {
-  const n = Math.max(0, Math.floor(Number($('manual').value) || 0))
-  progress = { ...progress, popped: n }
-  saveProgress()
-  showProgress()
-  say(`Set to ${n} popped.`)
-})
+$('open-settings').addEventListener('click', () => panel.open())
 
 // --- Start --------------------------------------------------------------------------------------
 
@@ -241,7 +182,8 @@ tapToStart({
   subtitle: 'Tap the bubbles as they drift up. There is no rush.',
   onStart: () => {
     sound.unlock()
-    sound.setNature(settings.nature)
-    sound.setMusic(settings.music)
+    panel.applySound()
   },
 })
+
+window.bubbles = { panel, sound }
