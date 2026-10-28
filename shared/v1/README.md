@@ -29,6 +29,9 @@ launch page: see "The game frame" in `../CLAUDE.md` (private) for the rules.
 
 ## Rules
 
+- **The contract:** `../CONTRACT.md` says what GameHub gives every game and what a game must do.
+  Before pushing a toolbox change, run `bash tools/test-all.sh` (every game against this toolbox).
+
 - **Version 1 never changes in a way that breaks a game.** Fixes and additions are fine. A
   change that would alter how existing games look, sound or save goes in `shared/v2/`, and each
   game moves over when it has been tested.
