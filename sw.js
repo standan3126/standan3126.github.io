@@ -5,8 +5,10 @@
 //   game-<id>           each ready game, saved the first time it's played
 // Anything else (including games still marked 'soon') is left completely alone.
 //
-// Saved copies are shown first, then refreshed in the background, so a new version appears
-// on the launch after the first online one.
+// Online, the newest copy is fetched first (and saved); the saved copy is used when offline, or
+// when the network takes longer than WAIT_MS. Before 2026-10-28 saved copies were shown first
+// and refreshed in the background, file by file, so a launch could mix a new game with an old
+// toolbox (Melody Garden showed GameHub's Music style that way); updates also needed two launches.
 importScripts('/games.js')
 
 const VERSION = 'dev' // replaced with the commit id when deployed
@@ -61,18 +63,22 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(fromCache(request, bucket, event))
 })
 
+const WAIT_MS = 3000
+
 async function fromCache(request, bucket, event) {
   const cache = await caches.open(bucket)
   const navigate = request.mode === 'navigate'
-  const saved = await cache.match(request, { ignoreSearch: navigate })
-  const fresh = fetch(request).then((response) => {
-    if (response.ok && response.type === 'basic') cache.put(request, response.clone())
+  const fresh = fetch(request).then(async (response) => {
+    if (response.ok && response.type === 'basic') await cache.put(request, response.clone())
     return response
   })
-  if (saved) {
-    event.waitUntil(fresh.catch(() => {}))
-    return saved
-  }
+  event.waitUntil(fresh.catch(() => {})) // a slow answer still updates the saved copy
+  const slow = new Promise((resolve) => setTimeout(resolve, WAIT_MS, null))
+  const response = await Promise.race([fresh.catch(() => null), slow])
+  if (response?.ok) return response
+  const saved = await cache.match(request, { ignoreSearch: navigate })
+  if (saved) return saved
+  if (response) return response // e.g. a 404 with nothing saved
   try {
     return await fresh
   } catch {
