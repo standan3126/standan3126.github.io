@@ -20,6 +20,7 @@ Shared pieces any GameHub game can use. They are plain JavaScript modules served
 | `kit.js` | `setupPage()`, `addExitButton()`, `tapToStart()`, `isInstalled()`, `warmOffline()` (save a whole game for offline in the background) |
 | `save.js` | `gameStore(id)` (saves with the game's name in front), transfer codes, backup files |
 | `panzoom.js` | `PanZoom`: pinch/drag/wheel zoom and pan for a board drawn on a canvas, taps told apart from drags (from Love To Color; used by Arrowhead) |
+| `settings.js` + `settings.css` | `SettingsPanel`: the one Settings panel every game uses, in Quiet Words' order (Light, Sound, Music, Nature sounds, the game's own sections, Move your progress, hidden grown-up tools). Saves settings and plays them through `Sound`. Music = Quiet Words' music or any Melody Garden style. Helpers `toggle`, `slider`, `choice`, `note` for a game's own sections. First used by Arrowhead |
 | `secret.js` | `hiddenUnlock()`: 5 quick taps + the family code reveal grown-up tools (set progress by hand) |
 | `sound/` | `Sound`: soft marimba notes, 7 nature sounds, gentle generated music (from Quiet Words), and music styles |
 | `sound/styles.js` | `STYLES`: music recipes made in Melody Garden (lullaby, Japanese garden, Celtic harp, rainy café, island, canyon flute). A game plays one with `sound.setStyle(style, dials)` + `sound.setMusic(true)` |
