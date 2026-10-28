@@ -16,6 +16,7 @@ const CORE_FILES = [
   '/',
   '/style.css',
   '/app.js',
+  '/hub-settings.js',
   '/games.js',
   '/manifest.json',
   '/version.json',

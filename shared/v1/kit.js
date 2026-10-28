@@ -70,19 +70,27 @@ const ICONS = {
   gear: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.6-2-3.4-2.4 1a7.7 7.7 0 0 0-2.6-1.5L14 2.5h-4l-.4 2.5A7.7 7.7 0 0 0 7 6.5l-2.4-1-2 3.4 2 1.6a7.6 7.6 0 0 0 0 3l-2 1.6 2 3.4 2.4-1a7.7 7.7 0 0 0 2.6 1.5l.4 2.5h4l.4-2.5a7.7 7.7 0 0 0 2.6-1.5l2.4 1 2-3.4-2-1.6Z"/></svg>',
 }
 
+const cornerButton = (className, label, icon, text) => {
+  const button = document.createElement('button')
+  button.type = 'button'
+  button.className = className
+  button.setAttribute('aria-label', label)
+  button.innerHTML = ICONS[icon] + (text ? `<span>${text}</span>` : '')
+  document.body.append(button)
+  return button
+}
+
+// Just the Settings gear, top right (the GameHub start page uses it for GameHub's settings).
+export function addSettingsGear(onSettings) {
+  const gear = cornerButton('hub-corner hub-corner-right hub-gear', 'Settings', 'gear')
+  gear.addEventListener('click', () => onSettings?.())
+  return gear
+}
+
 export function gameFrame({ onSettings, beforeExit, onHome } = {}) {
-  const make = (className, label, icon, text) => {
-    const button = document.createElement('button')
-    button.type = 'button'
-    button.className = className
-    button.setAttribute('aria-label', label)
-    button.innerHTML = ICONS[icon] + (text ? `<span>${text}</span>` : '')
-    document.body.append(button)
-    return button
-  }
-  const hub = make('hub-corner hub-corner-left', 'Exit to GameHub', 'hub', 'Hub')
-  const home = make('hub-corner hub-corner-left', 'Back to the game’s home', 'home', 'Home')
-  const gear = make('hub-corner hub-corner-right hub-gear', 'Settings', 'gear')
+  const hub = cornerButton('hub-corner hub-corner-left', 'Exit to GameHub', 'hub', 'Hub')
+  const home = cornerButton('hub-corner hub-corner-left', 'Back to the game’s home', 'home', 'Home')
+  const gear = addSettingsGear(onSettings)
   hub.addEventListener('click', async () => {
     try {
       await beforeExit?.()
@@ -91,7 +99,6 @@ export function gameFrame({ onSettings, beforeExit, onHome } = {}) {
     }
   })
   home.addEventListener('click', () => onHome?.())
-  gear.addEventListener('click', () => onSettings?.())
   const setPage = (page) => {
     hub.hidden = page === 'play'
     home.hidden = page !== 'play'

@@ -161,9 +161,10 @@ test('sound starts after the tap with no errors', async ({ page }) => {
 test('calm bubbles uses the shared settings panel: order, night, credits, old settings', async ({ page }) => {
   await page.goto('/games/bubbles/')
   // A save from before the shared panel: music was an on/off switch.
-  await page.evaluate(() =>
-    localStorage.setItem('bubbles:settings', JSON.stringify({ volumes: { notes: 0.4, nature: 0.6 }, music: true, nature: { rain: 0.45 } })),
-  )
+  await page.evaluate(() => {
+    localStorage.clear() // a real old save has only the old "settings"
+    localStorage.setItem('bubbles:settings', JSON.stringify({ volumes: { notes: 0.4, nature: 0.6 }, music: true, nature: { rain: 0.45 } }))
+  })
   await page.reload()
   await page.getByRole('button', { name: 'Tap to Start' }).click()
   const settings = await page.evaluate(() => window.bubbles.panel.settings)
@@ -286,4 +287,55 @@ test('melody garden saves a song, and its code brings it back', async ({ page })
   })
   expect(now).toEqual({ style: 'celtic', mood: 0.8, muted: ['bodhran'] })
   expect(errors).toEqual([])
+})
+
+test('GameHub settings are every game’s starting point; the game has the final say; Reset goes back', async ({ page }) => {
+  await page.goto('/')
+  await page.evaluate(() => localStorage.clear())
+  await page.reload()
+  const panel = page.locator('dialog.hub-settings')
+  const mine = (game) => page.evaluate((game) => JSON.parse(localStorage.getItem(`${game}:my-settings`)), game)
+
+  // GameHub's panel: shared settings only, no progress, no Reset. Night shows on the start page.
+  await page.getByRole('button', { name: 'Settings' }).click()
+  await expect(panel.locator('h2')).toHaveText('GameHub settings')
+  await expect(panel.getByText('Move your progress')).toHaveCount(0)
+  await expect(panel.getByRole('button', { name: 'Reset to GameHub settings' })).toHaveCount(0)
+  await panel.getByRole('radio', { name: 'Night' }).click()
+  await panel.getByLabel('Music style').selectOption({ label: 'Celtic Harp' })
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'night')
+  expect(await mine('hub')).toEqual({ light: 'night', music: 'celtic' })
+
+  // A game follows it; its own defaults stay where GameHub changed nothing.
+  await page.goto('/games/bubbles/')
+  await page.getByRole('button', { name: 'Tap to Start' }).click()
+  let s = await page.evaluate(() => window.bubbles.panel.settings)
+  expect(s).toMatchObject({ light: 'night', music: 'celtic', nature: { creek: 0.5, birds: 0.35 }, volumes: { notes: 0.8 } })
+
+  // Changed in the game: wins for this game only, and only that one setting is kept.
+  await page.getByRole('button', { name: 'Settings' }).click()
+  await panel.getByRole('radio', { name: 'Day' }).click()
+  expect(await mine('bubbles')).toEqual({ light: 'day' })
+
+  // GameHub changes later: untouched settings follow, the game's own choice stays.
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Settings' }).click()
+  await panel.getByLabel('Music style').selectOption({ label: 'Japanese Garden' })
+  await page.goto('/games/bubbles/')
+  await page.getByRole('button', { name: 'Tap to Start' }).click()
+  s = await page.evaluate(() => window.bubbles.panel.settings)
+  expect(s).toMatchObject({ light: 'day', music: 'garden' })
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'day')
+
+  // Reset (two taps): back on GameHub's settings, the controls show it, progress untouched.
+  await page.evaluate(() => localStorage.setItem('bubbles:progress', JSON.stringify({ popped: 9 })))
+  await page.getByRole('button', { name: 'Settings' }).click()
+  await panel.getByRole('button', { name: 'Reset to GameHub settings' }).click()
+  expect(await mine('bubbles')).toEqual({ light: 'day' }) // one tap does nothing
+  await panel.getByRole('button', { name: 'Tap again to reset' }).click()
+  await expect(panel.locator('.hub-message')).toHaveText('Back to GameHub’s settings.')
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'night')
+  await expect(panel.getByRole('radio', { name: 'Night' })).toHaveAttribute('aria-checked', 'true')
+  expect(await mine('bubbles')).toEqual({})
+  expect(await page.evaluate(() => localStorage.getItem('bubbles:progress'))).toBe('{"popped":9}')
 })

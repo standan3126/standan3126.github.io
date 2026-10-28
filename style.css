@@ -267,3 +267,51 @@ body {
   background: rgba(59, 58, 52, 0.08);
   color: var(--ink);
 }
+
+/* --- GameHub settings (gear top right, hub-settings.js) ----------------------------------------- */
+
+/* The start page's Settings panel uses the toolbox's colours; match the launchpad's. */
+:root {
+  --hub-bg: var(--bg);
+  --hub-ink: var(--ink);
+  --hub-soft: var(--soft);
+  --hub-accent: var(--accent);
+}
+
+/* Night (or Auto at night) on GameHub: warm light only, like every game's night look. */
+html[data-theme='night'] {
+  --bg: #1a0e06;
+  --ink: #ffcf9a;
+  --soft: #c98f5a;
+  --accent: #c9702c;
+  --accent-deep: #e0883a;
+  --card: rgba(42, 24, 12, 0.92);
+  --line: rgba(255, 180, 106, 0.2);
+  --hub-accent-ink: #1a0e06;
+  --hub-panel: rgba(42, 24, 12, 0.88);
+  --hub-panel-solid: #2a180c;
+  --hub-line: rgba(255, 180, 106, 0.2);
+  --hub-topbar: #1a0e06;
+  color-scheme: dark;
+}
+
+html[data-theme='night'] body {
+  background: linear-gradient(180deg, #24140a 0%, #120904 100%) fixed;
+}
+
+html[data-theme='night'] .game-art {
+  background: color-mix(in srgb, var(--tint) 35%, #2a180c);
+}
+
+html[data-theme='night'] .play,
+html[data-theme='night'] .confirm .primary {
+  color: #1a0e06;
+}
+
+html[data-theme='night'] .confirm {
+  background: #2a180c;
+}
+
+html[data-theme='night'] .confirm .secondary {
+  background: rgba(255, 180, 106, 0.12);
+}

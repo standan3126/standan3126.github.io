@@ -280,3 +280,10 @@
   background: var(--hub-panel-solid, #fffcf5);
   color: var(--hub-ink);
 }
+
+/* Reset to GameHub settings: last, apart from the rest. */
+.hub-reset {
+  margin-top: 22px;
+  padding-top: 14px;
+  border-top: 1px solid var(--hub-line);
+}
