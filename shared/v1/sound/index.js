@@ -12,15 +12,20 @@
 //
 // Music is the cozy generated music (music.js) unless a game picks a style (styles.js), which
 // the composer (composer.js) plays instead: sound.setStyle(style, dials); sound.setMusic(true).
+// ZEN_MUSIC (Momahjong's music, zen.js) is picked the same way: sound.setStyle(ZEN_MUSIC).
 import { createLayer, LAYERS } from './ambience.js'
 import { Composer } from './composer.js'
 import { Music } from './music.js'
 import { gain, impulseResponse } from './noise.js'
 import { Notes } from './notes.js'
+import { Zen } from './zen.js'
 
 export { LAYERS, LAYER_LABELS } from './ambience.js'
 export { STYLES } from './styles.js'
 export { DIALS } from './composer.js'
+
+// Momahjong's Zen music, as a music choice any game can play (2026-10-28).
+export const ZEN_MUSIC = { id: 'jade-sanctuary', name: 'Jade Sanctuary', engine: 'zen' }
 
 const LOOKAHEAD = 1.5 // seconds scheduled ahead; covers timer throttling when the tab is hidden
 const TICK_MS = 250
@@ -89,12 +94,14 @@ export class Sound {
     this.notes = new Notes(ctx, this.buses.notes)
     this.music = new Music(ctx, this.buses.music)
     this.composer = new Composer(ctx, this.buses.music)
+    this.zen = new Zen(ctx, this.buses.music)
 
     setInterval(() => {
       const t = ctx.currentTime
       for (const layer of this.layers.values()) layer.schedule(t, t + LOOKAHEAD)
       this.music.schedule(t, t + LOOKAHEAD)
       this.composer.schedule(t, t + LOOKAHEAD)
+      this.zen.schedule(t, t + LOOKAHEAD)
     }, TICK_MS)
     this.refresh()
   }
@@ -150,13 +157,17 @@ export class Sound {
     this.buses.music.gain.setTargetAtTime(curve(v.music), t, 0.3)
     // Don't spend battery generating what can't be heard.
     const playing = this.musicOn && v.music > 0 && !this.muted && !this.sleeping
-    this.composer.setStyle(this.style)
+    const zen = this.style?.engine === 'zen'
+    const composed = this.style && !zen ? this.style : null
+    this.composer.setStyle(composed)
     this.composer.setDials(this.dials)
     this.composer.setMuted(this.mutedParts)
     if (playing && !this.style) this.music.start()
     else this.music.stop()
-    if (playing && this.style) this.composer.start()
+    if (playing && composed) this.composer.start()
     else this.composer.stop()
+    if (playing && zen) this.zen.start()
+    else this.zen.stop()
     this.crossfade(this.muted || this.sleeping || v.nature === 0 ? {} : this.mix)
   }
 

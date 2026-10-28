@@ -18,8 +18,9 @@ Contract version: **1** (2026-10-28), for toolbox `shared/v1/`.
 | Saves | `shared/v1/save.js` `gameStore(id)` | Small saved values under `<id>:<key>`; transfer codes and backup files. |
 | Settings | `shared/v1/settings.js` `SettingsPanel` | The one Settings panel: Light (Day/Night/Auto), sounds, music style, sleep timer, nature sounds, the game's own sections, Move your progress, Credits, Reset to GameHub settings, hidden grown-up tools. Its sliders and checkboxes are drawn in the game's colours, so Night has no blue. |
 | GameHub settings | the gear on the start page | Every game's starting point for the shared settings (below). A game saves only what the player changed in that game; Reset goes back to GameHub's. |
-| Sound | `shared/v1/sound/` `Sound` | Game sounds, nature sounds, music, the sleep timer's fade. The Music style list comes from the toolbox, so new music reaches every game at once. |
+| Sound | `shared/v1/sound/` `Sound` | Game sounds, nature sounds, music, the sleep timer's fade. The Music style list comes from the toolbox (Quiet Words' music, Momahjong's Jade Sanctuary, every Melody Garden style), so new music reaches every game at once. Music made for one game goes here for all. A game may keep its own effect sounds if it plays them into `sound.buses.notes` (Momahjong). |
 | Hidden tools | `shared/v1/secret.js` | 5 taps on the Settings heading + the family code reveal set-progress-by-hand. |
+| Coins | `kit.css` `.hub-coin` | The one coin look for any game with an in-game currency (each game keeps its own wallet), shown next to the level name. |
 | Pan and zoom | `shared/v1/panzoom.js` | Pinch, drag and wheel zoom for a board on a canvas. |
 
 **Shared settings** (set on GameHub, changeable per game): `light`, `nightStart`, `nightEnd`,
@@ -83,10 +84,12 @@ toolbox defaults → the game's defaults → changed on GameHub → changed in t
 | `arrowhead` | Arrowhead | `arrowhead` | `arrowhead:*` |
 | `love-to-color` | Love To Color | `love-to-color` | `love-to-color:*` |
 | `quiet-words` | Quiet Words | `quiet_words` | `quiet-words:*` (settings) and its own IndexedDB database `quiet-words` (progress, albums, photos). Saves in the shared default database were moved there on 2026-10-28. |
-| `momahjong` | Momahjong | `momahjong` | `jadeSanctuary_*` in localStorage (shared on purpose with the old `momajong` site). **Not yet following rule 5**; moves under `momahjong:` when it joins the frame. |
+| `momahjong` | Momahjong | `momahjong` | `momahjong:*` (since 2026-10-28; everyone started over). The old `momajong` site's `jadeSanctuary_*` saves are left alone. |
 
 ## 5. Log
 
+- 2026-10-28: Momahjong joins (fresh saves under `momahjong:`, browser tests); `.hub-coin`;
+  Jade Sanctuary music (`ZEN_MUSIC`, `sound/zen.js`).
 - 2026-10-28: Quiet Words joins (own database); the panel gets the sleep timer, `placeNature`,
   and drawn sliders/checkboxes (the phone's own were grey and white at night).
 - 2026-10-28, version 1: first written down (the frame, the launch page, GameHub settings and

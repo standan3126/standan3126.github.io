@@ -25,8 +25,7 @@ run 'Arrowhead' "$games/arrowhead" 'npm test'
 run 'Love To Color' "$games/love-to-color" 'npm test'
 # Quiet Words copies the toolbox into its build, so it's built fresh against this one.
 run 'Quiet Words' "$games/quiet-words" 'npm test && npx playwright test'
-# Momahjong has level checks only, until it gets browser tests (contract rule 11).
-run 'Momahjong (levels only)' "$games/momahjong" 'node build/check-levels.mjs'
+run 'Momahjong' "$games/momahjong" 'npm test'
 
 echo
 if [ ${#failed[@]} -eq 0 ]; then

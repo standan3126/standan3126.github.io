@@ -234,7 +234,23 @@ test('every music style makes sound, without clipping', async ({ page }, info) =
   const levels = await page.evaluate(async () => {
     const { Composer } = await import('/shared/v1/sound/composer.js')
     const { STYLES } = await import('/shared/v1/sound/styles.js')
+    const { Zen } = await import('/shared/v1/sound/zen.js')
     const out = {}
+    // Momahjong's Zen music, played through the same mixer.
+    {
+      const ctx = new OfflineAudioContext(1, 44100 * 8, 44100)
+      const z = new Zen(ctx, ctx.destination)
+      z.start()
+      for (let t = 0; t < 8; t += 0.25) z.schedule(t, t + 1.5)
+      const d = (await ctx.startRendering()).getChannelData(0)
+      let sum = 0
+      let peak = 0
+      for (let i = 44100; i < d.length; i++) {
+        sum += d[i] * d[i]
+        peak = Math.max(peak, Math.abs(d[i]))
+      }
+      out.zen = { rms: 20 * Math.log10(Math.sqrt(sum / (d.length - 44100))), peak }
+    }
     for (const style of STYLES) {
       const ctx = new OfflineAudioContext(1, 44100 * 8, 44100)
       const c = new Composer(ctx, ctx.destination)

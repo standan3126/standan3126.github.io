@@ -58,7 +58,7 @@
 
 import { hiddenUnlock } from './secret.js'
 import { gameStore, makeTransferCode, openBackupFile, readTransferCode, saveBackupFile } from './save.js'
-import { LAYER_LABELS, LAYERS, STYLES } from './sound/index.js'
+import { LAYER_LABELS, LAYERS, STYLES, ZEN_MUSIC } from './sound/index.js'
 
 // "quiet-words" is the gentle music first made for Quiet Words (Sound with no style).
 export const QUIET_WORDS_MUSIC = 'quiet-words'
@@ -310,7 +310,7 @@ export class SettingsPanel {
     sound.setMuted(s.muted)
     if (!this.owns.includes('nature')) sound.setNature(this.natureMix())
     if (this.owns.includes('music')) return
-    const style = s.music === QUIET_WORDS_MUSIC ? null : STYLES.find((st) => st.id === s.music) ?? null
+    const style = s.music === QUIET_WORDS_MUSIC ? null : [ZEN_MUSIC, ...STYLES].find((st) => st.id === s.music) ?? null
     sound.setStyle(style, style?.dials ?? {})
     sound.setMusic(s.volumes.music > 0)
   }
@@ -397,7 +397,8 @@ export class SettingsPanel {
 
   // One row: the phone's own picker, with Quiet Words' music and every Melody Garden style.
   musicStyle() {
-    const options = [{ value: QUIET_WORDS_MUSIC, label: 'Quiet Words' }, ...STYLES.map((s) => ({ value: s.id, label: s.name }))]
+    // Each game's own music, then every Melody Garden style.
+    const options = [{ value: QUIET_WORDS_MUSIC, label: 'Quiet Words' }, { value: ZEN_MUSIC.id, label: ZEN_MUSIC.name }, ...STYLES.map((s) => ({ value: s.id, label: s.name }))]
     const value = options.some((o) => o.value === this.settings.music) ? this.settings.music : QUIET_WORDS_MUSIC
     const select = make('select', { className: 'hub-select' }, ...options.map((o) => make('option', { value: o.value, textContent: o.label })))
     select.value = value
