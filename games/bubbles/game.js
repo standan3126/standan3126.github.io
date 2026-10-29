@@ -399,4 +399,4 @@ tapToStart({
   },
 })
 
-window.bubbles = { panel, sound, pond: bubbles, drops, pop, bubble, look: () => look }
+window.bubbles = { panel, sound, pond: bubbles, drops, pop, bubble, pickSize, look: () => look }

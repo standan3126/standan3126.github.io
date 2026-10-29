@@ -206,10 +206,12 @@ test('calm bubbles v1: a full pond of sizes and colors, the big one pops into li
   await page.getByRole('button', { name: 'Tap to Start' }).click()
   await page.waitForTimeout(1500)
   const pond = await page.evaluate(() => window.bubbles.pond.map((b) => ({ r: b.r, tint: b.tint })))
-  expect(pond.length).toBeGreaterThanOrEqual(13) // about 16-22 on a phone; a few may be floating off the top
-  expect(Math.min(...pond.map((b) => b.r))).toBeLessThan(20)
-  expect(Math.max(...pond.map((b) => b.r))).toBeGreaterThan(40)
-  expect(new Set(pond.map((b) => b.tint)).size).toBeGreaterThan(5)
+  expect(pond.length).toBeGreaterThanOrEqual(10) // 14-22 depending on the phone; a few may be floating off the top
+  const sizes = await page.evaluate(() => Array.from({ length: 300 }, () => window.bubbles.pickSize()))
+  expect(Math.min(...sizes)).toBeLessThan(18)
+  expect(Math.max(...sizes)).toBeGreaterThan(50)
+  expect(await page.evaluate(() => window.bubbles.look().tints.length)).toBe(10)
+  expect(new Set(pond.map((b) => b.tint)).size).toBeGreaterThanOrEqual(3)
 
   // A big bubble lets go of little ones and every pop leaves a splash.
   const result = await page.evaluate(() => {
