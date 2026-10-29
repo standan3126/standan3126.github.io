@@ -197,6 +197,57 @@ test('calm bubbles uses the shared settings panel: order, night, credits, old se
   expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe('night')
 })
 
+test('calm bubbles v1: a full pond of sizes and colors, the big one pops into little ones, splashes, warm night', async ({ page }) => {
+  const errors = []
+  page.on('pageerror', (e) => errors.push(e.message))
+  await page.goto('/games/bubbles/')
+  await page.evaluate(() => localStorage.clear())
+  await page.reload()
+  await page.getByRole('button', { name: 'Tap to Start' }).click()
+  await page.waitForTimeout(1500)
+  const pond = await page.evaluate(() => window.bubbles.pond.map((b) => ({ r: b.r, tint: b.tint })))
+  expect(pond.length).toBeGreaterThanOrEqual(13) // about 16-22 on a phone; a few may be floating off the top
+  expect(Math.min(...pond.map((b) => b.r))).toBeLessThan(20)
+  expect(Math.max(...pond.map((b) => b.r))).toBeGreaterThan(40)
+  expect(new Set(pond.map((b) => b.tint)).size).toBeGreaterThan(5)
+
+  // A big bubble lets go of little ones and every pop leaves a splash.
+  const result = await page.evaluate(() => {
+    const { pond, bubble, pop, drops } = window.bubbles
+    pond.length = 0
+    const big = bubble(150, 300, 60, 'cluster')
+    big.drawX = 150
+    pond.push(big)
+    pop(0)
+    return { little: pond.length, drops: drops.length, sizes: pond.map((b) => b.r) }
+  })
+  expect(result.little).toBeGreaterThanOrEqual(4)
+  expect(Math.max(...result.sizes)).toBeLessThan(24)
+  expect(result.drops).toBeGreaterThan(0)
+  await expect(page.locator('#popped')).toHaveText('1')
+
+  // A shimmery one pops too, with sparkles.
+  await page.evaluate(() => {
+    const { pond, bubble, pop } = window.bubbles
+    const s = bubble(100, 200, 40, 'shimmer')
+    s.drawX = 100
+    pond.push(s)
+    pop(pond.length - 1)
+  })
+  await expect(page.locator('#popped')).toHaveText('2')
+
+  // Night: warm colors only, no blue.
+  await page.getByRole('button', { name: 'Settings' }).click()
+  await page.getByRole('radio', { name: 'Night' }).click()
+  const night = await page.evaluate(() => window.bubbles.look())
+  for (const c of night.tints) {
+    const n = parseInt(c.slice(1), 16)
+    expect(n & 255).toBeLessThan((n >> 16) * 0.75) // blue well under red
+  }
+  expect(night.shimmer[1]).toBeLessThanOrEqual(60) // shimmer hues red to gold
+  expect(errors).toEqual([])
+})
+
 test('melody garden plays a style, and the dials, players and pause work', async ({ page }) => {
   const errors = []
   page.on('pageerror', (e) => errors.push(e.message))
