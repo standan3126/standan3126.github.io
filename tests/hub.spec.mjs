@@ -213,6 +213,26 @@ test('calm bubbles v1: a full pond of sizes and colors, the big one pops into li
   expect(await page.evaluate(() => window.bubbles.look().tints.length)).toBe(10)
   expect(new Set(pond.map((b) => b.tint)).size).toBeGreaterThanOrEqual(3)
 
+  // New bubbles also come in from the left and right of the bottom half.
+  const spawns = await page.evaluate(() => {
+    const { pond, addBubble } = window.bubbles
+    const saved = pond.splice(0)
+    for (let i = 0; i < 200; i++) addBubble()
+    const out = pond.map((b) => ({ x: b.x, y: b.y, r: b.r, drift: b.drift }))
+    pond.splice(0, pond.length, ...saved)
+    return { list: out, w: innerWidth, h: innerHeight }
+  })
+  const left = spawns.list.filter((b) => b.x < 0)
+  const right = spawns.list.filter((b) => b.x > spawns.w)
+  expect(left.length).toBeGreaterThan(10)
+  expect(right.length).toBeGreaterThan(10)
+  for (const b of [...left, ...right]) expect(b.y).toBeGreaterThanOrEqual(spawns.h / 2 - 1)
+  expect(left.every((b) => b.drift > 0) && right.every((b) => b.drift < 0)).toBe(true)
+
+  // Size is pitch: bigger is lower, every step of size in between.
+  const pitches = await page.evaluate(() => [70, 58, 44, 30, 20, 12].map(window.bubbles.pitchFor))
+  for (let i = 1; i < pitches.length; i++) expect(pitches[i]).toBeGreaterThan(pitches[i - 1])
+
   // A big bubble lets go of little ones and every pop leaves a splash.
   const result = await page.evaluate(() => {
     const { pond, bubble, pop, drops } = window.bubbles

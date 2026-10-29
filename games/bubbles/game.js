@@ -56,8 +56,6 @@ const NIGHT = {
 let look = DAY
 let width = 0
 let height = 0
-let streak = 0
-let lastPop = 0
 
 function resize() {
   const ratio = devicePixelRatio || 1
@@ -89,11 +87,20 @@ function pickSize() {
 const BIG_ONE = 0.05 // a big bubble that pops into little ones
 const SHIMMER = 0.04 // the rare shimmery one
 
+// New bubbles come in from anywhere along the bottom, or from the left or right side of the
+// bottom half, drifting in as they rise (user, 2026-10-28).
 function addBubble(anywhere = false) {
   const roll = Math.random()
   const kind = roll < SHIMMER ? 'shimmer' : roll < SHIMMER + BIG_ONE ? 'cluster' : 'plain'
   const r = kind === 'cluster' ? 58 + Math.random() * 12 : kind === 'shimmer' ? 34 + Math.random() * 10 : pickSize()
-  bubbles.push(bubble(r + Math.random() * Math.max(1, width - 2 * r), anywhere ? Math.random() * height : height + r, r, kind))
+  if (anywhere) return bubbles.push(bubble(r + Math.random() * Math.max(1, width - 2 * r), Math.random() * height, r, kind))
+  const side = Math.random()
+  if (side < 0.6) return bubbles.push(bubble(r + Math.random() * Math.max(1, width - 2 * r), height + r, r, kind))
+  const fromLeft = side < 0.8
+  const b = bubble(fromLeft ? -r : width + r, height * (0.5 + Math.random() * 0.5), r, kind)
+  b.drift = (fromLeft ? 1 : -1) * (60 + Math.random() * 50)
+  b.driftFade = 0.5 // side bubbles keep drifting in a little longer
+  bubbles.push(b)
 }
 
 function bubble(x, y, r, kind = 'plain') {
@@ -208,7 +215,7 @@ function frame(now) {
     b.y -= b.speed * dt
     b.sway += dt * 0.8
     b.x += b.drift * dt
-    b.drift *= 1 - Math.min(1, dt * 1.5)
+    b.drift *= 1 - Math.min(1, dt * (b.driftFade || 1.5))
     const x = b.x + Math.sin(b.sway) * b.swayWidth
     if (b.y < -b.r) {
       bubbles.splice(i, 1)
@@ -280,7 +287,17 @@ function splash(b, now) {
 // --- Softer sounds for little ears --------------------------------------------------------------
 // Rounder than the toolbox's marimba (no mallet knock) and quieter, with a little upward
 // "bloop". Played through the shared notes bus, so the Pop sounds slider and mute still work.
-const POP_SCALE = [67, 69, 72, 74, 76, 79, 81, 84, 86, 88].map((m) => 440 * 2 ** ((m - 69) / 12))
+// A bubble's size is its note (user, 2026-10-28): the biggest sound lowest, the tiniest highest,
+// every size in between on its own step. All notes are in one key (C major pentatonic), so
+// whatever gets popped, in any order, makes music together.
+const PITCHES = [52, 55, 57, 60, 62, 64, 67, 69, 72, 74, 76, 79, 81, 84, 86, 88] // E3 to E6
+const SMALLEST = 12
+const BIGGEST = 70
+const midiToHz = (m) => 440 * 2 ** ((m - 69) / 12)
+function pitchFor(r) {
+  const t = Math.min(1, Math.max(0, (r - SMALLEST) / (BIGGEST - SMALLEST)))
+  return midiToHz(PITCHES[Math.round((1 - t) * (PITCHES.length - 1))])
+}
 
 function bloop(freq, when, peak, decay = 0.7) {
   const c = sound.ctx
@@ -297,13 +314,14 @@ function bloop(freq, when, peak, decay = 0.7) {
   osc.stop(when + decay + 0.05)
 }
 
-function popSound(b, step) {
+function popSound(b) {
   if (!sound.ctx || !sound.buses) return
   const t = sound.ctx.currentTime + 0.005
-  // Bigger bubbles sound a little lower.
-  const freq = POP_SCALE[step % POP_SCALE.length] * (b.r > 44 ? 0.5 : 1)
-  bloop(freq, t, 0.2)
-  bloop(freq * 2, t, 0.04, 0.3)
+  const freq = pitchFor(b.r)
+  // Low notes ring longer and get a stronger octave above, so phone speakers still carry them.
+  const low = freq < 260
+  bloop(freq, t, 0.2, low ? 1.1 : 0.7)
+  bloop(freq * 2, t, low ? 0.09 : 0.04, low ? 0.5 : 0.3)
   if (b.kind === 'shimmer') [1.25, 1.5, 2].forEach((k, i) => bloop(freq * k, t + 0.08 * (i + 1), 0.08, 0.9))
 }
 
@@ -344,10 +362,7 @@ function pop(index) {
       bubbles.push(little)
     }
   }
-  // Quick pops climb the scale; a pause starts it again.
-  streak = now - lastPop < 1500 ? streak + 1 : 0
-  lastPop = now
-  popSound(b, streak)
+  popSound(b)
   progress.popped++
   showProgress()
   saveProgress()
@@ -399,4 +414,4 @@ tapToStart({
   },
 })
 
-window.bubbles = { panel, sound, pond: bubbles, drops, pop, bubble, pickSize, look: () => look }
+window.bubbles = { panel, sound, pond: bubbles, drops, pop, bubble, pickSize, addBubble, pitchFor, look: () => look }
