@@ -67,6 +67,9 @@ toolbox defaults → the game's defaults → changed on GameHub → changed in t
     art and sounds are copied in, permissively licensed, and listed in `CREDITS.md`.
 11. **Has tests** that `npm test` runs, against a local copy of the toolbox (`HUB_DIR` or
     `SHARED_DIR` pointing at the hub folder), covering: it starts, the frame, settings, saves.
+12. **Lists its art.** Every icon, button, tile, sprite and picture is in `ART.md` with its size,
+    what it's made of and its day/night colours, and on a sprite sheet: the game adds its section
+    to `tools/art/art-kit.mjs` before it launches. New art may replace any piece one at a time.
 
 ## 3. How the toolbox changes
 
@@ -99,6 +102,8 @@ toolbox defaults → the game's defaults → changed on GameHub → changed in t
   Toolbox additions (v1, games without them unchanged; test-all passed): `tapToStart({ choices })`,
   `gameFrame({ onHelp })`, `book.js`/`book.css`, and `PATTERNS.md`. `tools/test-all.sh` now runs
   Quiet Numbers too.
+- 2026-10-30, rule 12: every game lists its art (`ART.md`, `tools/art/art-kit.mjs`) so the user can
+  replace it with their own.
 - 2026-10-30: Quiet Numbers joins GameHub (Sudoku and Sum Cross); `PanZoom` noted for boards of HTML boxes.
 - 2026-10-30: id `quiet-numbers` reserved (number puzzles; workshop, not launched).
 - 2026-10-28: Momahjong joins (fresh saves under `momahjong:`, browser tests); `.hub-coin`;
