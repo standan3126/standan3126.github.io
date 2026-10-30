@@ -62,4 +62,13 @@ self.GAMES = [
     color: '#b9a58a',
     status: 'ready',
   },
+  {
+    id: 'quiet-numbers',
+    name: 'Quiet Numbers',
+    path: '/quiet_numbers/',
+    blurb: 'Sudoku and Sum Cross, played like a puzzle book.',
+    icon: '✏️',
+    color: '#d8c79a',
+    status: 'ready',
+  },
 ]

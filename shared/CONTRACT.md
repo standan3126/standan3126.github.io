@@ -90,7 +90,7 @@ toolbox defaults → the game's defaults → changed on GameHub → changed in t
 | `arrowhead` | Arrowhead | `arrowhead` | `arrowhead:*` |
 | `love-to-color` | Love To Color | `love-to-color` | `love-to-color:*` |
 | `quiet-words` | Quiet Words | `quiet_words` | `quiet-words:*` (settings) and its own IndexedDB database `quiet-words` (progress, albums, photos). Saves in the shared default database were moved there on 2026-10-28. |
-| `quiet-numbers` | Quiet Numbers (Sudoku, Math Crossword) | `quiet_numbers` (private, storage only; workshop, not in GameHub yet) | `quiet-numbers:*` (`save`, `book-easy` … `book-expert`, `my-settings`). No hidden set-progress tools: every puzzle is open to play, so nothing needs setting by hand |
+| `quiet-numbers` | Quiet Numbers (Sudoku, Sum Cross) | `quiet_numbers` | `quiet-numbers:*` (`save`, Sudoku's `book-easy` … `book-expert`, Sum Cross's `book-sumcross-easy` …, `my-settings`). No hidden set-progress tools: every puzzle is open to play, so nothing needs setting by hand |
 | `momahjong` | Momahjong | `momahjong` | `momahjong:*` (since 2026-10-28; everyone started over). The old `momajong` site's `jadeSanctuary_*` saves are left alone. |
 
 ## 5. Log
@@ -99,6 +99,7 @@ toolbox defaults → the game's defaults → changed on GameHub → changed in t
   Toolbox additions (v1, games without them unchanged; test-all passed): `tapToStart({ choices })`,
   `gameFrame({ onHelp })`, `book.js`/`book.css`, and `PATTERNS.md`. `tools/test-all.sh` now runs
   Quiet Numbers too.
+- 2026-10-30: Quiet Numbers joins GameHub (Sudoku and Sum Cross); `PanZoom` noted for boards of HTML boxes.
 - 2026-10-30: id `quiet-numbers` reserved (number puzzles; workshop, not launched).
 - 2026-10-28: Momahjong joins (fresh saves under `momahjong:`, browser tests); `.hub-coin`;
   Jade Sanctuary music (`ZEN_MUSIC`, `sound/zen.js`).
