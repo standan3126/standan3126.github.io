@@ -4,7 +4,7 @@ What GameHub gives every game, and what a game must do to plug in. Every game in
 it, and every change to the toolbox keeps it. If a game needs something the contract doesn't
 allow, change the contract first (and the toolbox with it), not just the game.
 
-Contract version: **1** (2026-10-28), for toolbox `shared/v1/`.
+Contract version: **2** (2026-10-30), for toolbox `shared/v1/`.
 
 ## 1. What GameHub gives every game
 
@@ -13,7 +13,7 @@ Contract version: **1** (2026-10-28), for toolbox `shared/v1/`.
 | The app | `/manifest.json`, `/sw.js` | The one installable app and its offline helper. A game is saved for offline the first time it's played (cache `game-<id>`); `warmOffline(list)` saves the rest in the background. "Free up space" deletes only `game-<id>`, never saves. |
 | The frame | `shared/v1/kit.js` `gameFrame()`, `kit.css` | Hub (launch page) or Home (playing) top left; the Settings gear top right, never moving. A page that scrolls puts `hub-scrolls` on `<body>` so content fades out before the buttons. |
 | The launch page | `kit.css` `.hub-launch`, `.hub-play`, `.hub-levels` | Title at the top, the game's own choices in the middle, Play and Levels pinned in the same spot in every game. |
-| Tap to Start | `kit.js` `tapToStart()` | The first tap, which lets sound play on iPhone. |
+| Tap to Start | `kit.js` `tapToStart()` | The first tap, which lets sound play on iPhone. With `choices` it asks a question instead (one button per answer, e.g. Quiet Numbers' Finger / Stylus), asked every time the game opens. |
 | Phone layout | `kit.js` `setupPage()` | iPhone home-screen sizing (`html.ios-app`, `html.ios-solid-bar`, `--app-height`). |
 | Saves | `shared/v1/save.js` `gameStore(id)` | Small saved values under `<id>:<key>`; transfer codes and backup files. |
 | Settings | `shared/v1/settings.js` `SettingsPanel` | The one Settings panel: Light (Day/Night/Auto), sounds, music style, sleep timer, nature sounds, the game's own sections, Move your progress, Credits, Reset to GameHub settings, hidden grown-up tools. Its sliders and checkboxes are drawn in the game's colours, so Night has no blue. |
@@ -22,6 +22,9 @@ Contract version: **1** (2026-10-28), for toolbox `shared/v1/`.
 | Hidden tools | `shared/v1/secret.js` | 5 taps on the Settings heading + the family code reveal set-progress-by-hand. |
 | Coins | `kit.css` `.hub-coin` | The one coin look for any game with an in-game currency (each game keeps its own wallet), shown next to the level name. |
 | Pan and zoom | `shared/v1/panzoom.js` | Pinch, drag and wheel zoom for a board on a canvas. |
+| The book | `shared/v1/book.js`, `book.css` | Levels as pages of a puzzle book: six a page, arrows, Start in Play's spot (see `PATTERNS.md`). |
+| Rules button | `kit.js` `gameFrame({ onHelp })` | A ? under the gear while playing, for the game's rules. |
+| Patterns | `shared/PATTERNS.md` | Game designs worth reusing, with where their code is. Look here before designing something new. |
 
 **Shared settings** (set on GameHub, changeable per game): `light`, `nightStart`, `nightEnd`,
 `volumes` (`notes`, `nature`, `music`), `muted`, `music`, `nature`. Layers, last one wins:
@@ -55,8 +58,11 @@ toolbox defaults → the game's defaults → changed on GameHub → changed in t
    set-progress-by-hand tools if it has progress.
 8. **Phones first.** Works from 360 px wide to 430×932, in the iPhone home-screen app and on
    Android; tap targets at least 44 px; plain words.
-9. **Calm by design.** No ads, purchases, timers that push, fake urgency, random-prize rewards,
-   or flashing. Sound goes through the toolbox `Sound` and pauses when the app is hidden.
+9. **Calm by design, not boring.** No ads, purchases, timers that push, fake urgency,
+   random-prize rewards, or flashing. Stakes inside a level are welcome (a mistake may cost
+   time, a mark on the result or a restart of that level), but never saves, levels reached or
+   anything already earned. Sound goes through the toolbox `Sound` and pauses when the app is
+   hidden.
 10. **Sends nothing anywhere** and loads nothing from other servers while playing. Borrowed code,
     art and sounds are copied in, permissively licensed, and listed in `CREDITS.md`.
 11. **Has tests** that `npm test` runs, against a local copy of the toolbox (`HUB_DIR` or
@@ -84,10 +90,16 @@ toolbox defaults → the game's defaults → changed on GameHub → changed in t
 | `arrowhead` | Arrowhead | `arrowhead` | `arrowhead:*` |
 | `love-to-color` | Love To Color | `love-to-color` | `love-to-color:*` |
 | `quiet-words` | Quiet Words | `quiet_words` | `quiet-words:*` (settings) and its own IndexedDB database `quiet-words` (progress, albums, photos). Saves in the shared default database were moved there on 2026-10-28. |
+| `quiet-numbers` | Quiet Numbers (Sudoku, Math Crossword) | `quiet_numbers` (private, storage only; workshop, not in GameHub yet) | `quiet-numbers:*` (`save`, `book-easy` … `book-expert`, `my-settings`). No hidden set-progress tools: every puzzle is open to play, so nothing needs setting by hand |
 | `momahjong` | Momahjong | `momahjong` | `momahjong:*` (since 2026-10-28; everyone started over). The old `momajong` site's `jadeSanctuary_*` saves are left alone. |
 
 ## 5. Log
 
+- 2026-10-30, version 2: rule 9 allows stakes inside a level (user: calm is not boring).
+  Toolbox additions (v1, games without them unchanged; test-all passed): `tapToStart({ choices })`,
+  `gameFrame({ onHelp })`, `book.js`/`book.css`, and `PATTERNS.md`. `tools/test-all.sh` now runs
+  Quiet Numbers too.
+- 2026-10-30: id `quiet-numbers` reserved (number puzzles; workshop, not launched).
 - 2026-10-28: Momahjong joins (fresh saves under `momahjong:`, browser tests); `.hub-coin`;
   Jade Sanctuary music (`ZEN_MUSIC`, `sound/zen.js`).
 - 2026-10-28: Quiet Words joins (own database); the panel gets the sleep timer, `placeNature`,

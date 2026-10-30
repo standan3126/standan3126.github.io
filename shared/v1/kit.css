@@ -150,6 +150,19 @@ html.ios-app body::before {
   height: 24px;
 }
 
+/* The ? under the gear (gameFrame onHelp): the game's rules. */
+.hub-help {
+  top: calc(env(safe-area-inset-top) + 62px);
+  justify-content: center;
+  width: 44px;
+  padding: 0;
+}
+
+.hub-help svg {
+  width: 24px;
+  height: 24px;
+}
+
 /* A page that scrolls under the frame: put class "hub-scrolls" on <body> and the content fades
    out before it reaches Hub/Home and the gear. --hub-fade is the colour at the top of the page
    (default: the page background). */
@@ -318,6 +331,31 @@ html.ios-solid-bar .hub-launch {
 
 .hub-start-card p:empty {
   display: none;
+}
+
+/* Tap to Start as a question (tapToStart choices): one button per answer, side by side. */
+.hub-start-choices {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 10px;
+}
+
+.hub-start-choices .hub-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 10px;
+  min-height: 64px;
+  border-radius: var(--hub-radius);
+}
+
+.hub-start-choices small {
+  font-size: 0.78rem;
+  font-weight: 500;
+  opacity: 0.85;
+  line-height: 1.3;
 }
 
 @media (prefers-reduced-motion: reduce) {

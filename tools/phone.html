@@ -1,0 +1,165 @@
+<!doctype html>
+<!-- A phone-sized window for playing a game on the computer before it goes to real phones.
+     Not published (the deploy leaves tools/ out). Open it through a game's local server, e.g.
+     http://localhost:4230/tools/phone.html (Quiet Numbers' npm run serve). Any game served on the
+     same server can be picked by its address. What it can't copy: the iPhone clock bar
+     (home-screen apps draw under it) and real touch; check those on the phone. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phone preview</title>
+    <style>
+      :root {
+        --bg: #e9e6df;
+        --ink: #23221f;
+        --soft: #6d6b66;
+        --phone: #1d1d1f;
+        color-scheme: light;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #191714;
+          --ink: #eee9df;
+          --soft: #a39d92;
+          --phone: #050505;
+          color-scheme: dark;
+        }
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--bg);
+        color: var(--ink);
+        font: 15px system-ui, sans-serif;
+      }
+      header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px 14px;
+        padding: 12px 16px;
+      }
+      header h1 {
+        margin: 0;
+        font-size: 1.05rem;
+      }
+      input[type='text'] {
+        width: 15em;
+        padding: 6px 8px;
+        font: inherit;
+      }
+      select,
+      button {
+        padding: 6px 10px;
+        font: inherit;
+      }
+      .note {
+        color: var(--soft);
+        font-size: 0.85rem;
+      }
+      main {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: flex-start;
+        gap: 28px;
+        padding: 8px 16px 32px;
+      }
+      figure {
+        margin: 0;
+        text-align: center;
+      }
+      figcaption {
+        margin-top: 8px;
+        color: var(--soft);
+        font-size: 0.85rem;
+      }
+      .phone {
+        padding: 12px;
+        border-radius: 44px;
+        background: var(--phone);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+      }
+      .screen {
+        overflow: hidden;
+        border-radius: 32px;
+        background: #fff;
+      }
+      iframe {
+        display: block;
+        border: 0;
+        transform-origin: 0 0;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Phone preview</h1>
+      <label>Page <input type="text" id="url" value="/quiet-numbers/" /></label>
+      <label>Phone <select id="device"></select></label>
+      <label><input type="checkbox" id="all" /> Three side by side</label>
+      <button type="button" id="reload">Reload</button>
+      <span class="note">Clicks are taps. Saves are shared with the browser tab of the same address.</span>
+    </header>
+    <main id="phones"></main>
+    <script>
+      const DEVICES = [
+        { id: 'small', name: 'Small Android', w: 360, h: 640 },
+        { id: 'se', name: 'iPhone SE', w: 375, h: 667 },
+        { id: 'iphone', name: 'iPhone 16', w: 393, h: 852 },
+        { id: 'pixel', name: 'Pixel 7', w: 412, h: 915 },
+        { id: 'max', name: 'iPhone 16 Pro Max', w: 430, h: 932 },
+      ]
+      const SIDE_BY_SIDE = ['small', 'iphone', 'max']
+      const $ = (id) => document.getElementById(id)
+      const remember = (key, value) => {
+        try {
+          if (value === undefined) return localStorage.getItem(`phone-preview:${key}`)
+          localStorage.setItem(`phone-preview:${key}`, value)
+        } catch {}
+      }
+      for (const d of DEVICES) $('device').append(new Option(`${d.name} (${d.w}×${d.h})`, d.id))
+      $('url').value = remember('url') ?? $('url').value
+      $('device').value = remember('device') ?? 'iphone'
+      $('all').checked = remember('all') === 'true'
+
+      function build() {
+        remember('url', $('url').value)
+        remember('device', $('device').value)
+        remember('all', String($('all').checked))
+        const list = $('all').checked ? DEVICES.filter((d) => SIDE_BY_SIDE.includes(d.id)) : DEVICES.filter((d) => d.id === $('device').value)
+        // Shrink to fit the window height (the page inside still thinks it has the full size).
+        const room = window.innerHeight - $('phones').getBoundingClientRect().top - 70
+        const scale = Math.min(1, room / Math.max(...list.map((d) => d.h)))
+        $('phones').replaceChildren(
+          ...list.map((d) => {
+            const frame = Object.assign(document.createElement('iframe'), { src: $('url').value, title: d.name })
+            frame.width = d.w
+            frame.height = d.h
+            frame.style.transform = `scale(${scale})`
+            const screen = Object.assign(document.createElement('div'), { className: 'screen' })
+            screen.style.width = `${d.w * scale}px`
+            screen.style.height = `${d.h * scale}px`
+            screen.append(frame)
+            const phone = Object.assign(document.createElement('div'), { className: 'phone' })
+            phone.append(screen)
+            const figure = document.createElement('figure')
+            figure.append(phone, Object.assign(document.createElement('figcaption'), { textContent: `${d.name}, ${d.w}×${d.h}${scale < 1 ? `, shown at ${Math.round(scale * 100)}%` : ''}` }))
+            return figure
+          }),
+        )
+      }
+      $('device').addEventListener('change', build)
+      $('all').addEventListener('change', build)
+      $('reload').addEventListener('click', build)
+      $('url').addEventListener('change', build)
+      let resizing = 0
+      window.addEventListener('resize', () => {
+        clearTimeout(resizing)
+        resizing = setTimeout(build, 200)
+      })
+      build()
+    </script>
+  </body>
+</html>

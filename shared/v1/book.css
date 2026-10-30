@@ -1,0 +1,89 @@
+/* The book (book.js): pages of level tiles, the pager, Start in Play's spot. Colours come from the
+   --hub-* variables, so a game's Day and Night looks apply. The game draws inside each tile. */
+
+.hub-book {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.hub-book-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: min(420px, 100%);
+}
+
+.hub-book-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  padding: 6px 6px 8px;
+  border-radius: 12px;
+  border: 1px solid var(--hub-line);
+  background: var(--hub-panel);
+  color: var(--hub-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.hub-book-tile[hidden] {
+  display: none;
+}
+
+/* The picked tile: what Start opens. */
+.hub-book-tile[aria-pressed='true'] {
+  border: 2px solid var(--hub-accent);
+  padding: 5px 5px 7px;
+}
+
+.hub-book-pager {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hub-book-arrow {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--hub-line);
+  background: var(--hub-panel);
+  color: var(--hub-ink);
+  cursor: pointer;
+}
+
+.hub-book-arrow svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.hub-book-arrow:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.hub-book-page {
+  min-width: 7.5em;
+  margin: 0;
+  text-align: center;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Start greys until a tile on this page is picked. */
+.hub-book .hub-play:disabled {
+  opacity: 0.35;
+  box-shadow: none;
+  cursor: default;
+}

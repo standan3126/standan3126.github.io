@@ -26,6 +26,7 @@ run 'Love To Color' "$games/love-to-color" 'npm test'
 # Quiet Words copies the toolbox into its build, so it's built fresh against this one.
 run 'Quiet Words' "$games/quiet-words" 'npm test && npx playwright test'
 run 'Momahjong' "$games/momahjong" 'npm test'
+run 'Quiet Numbers' "$games/quiet-numbers" 'npm test'
 
 echo
 if [ ${#failed[@]} -eq 0 ]; then

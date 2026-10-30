@@ -18,7 +18,8 @@ launch page: see "The game frame" in `../CLAUDE.md` (private) for the rules.
 | File | Gives you |
 |---|---|
 | `kit.css` | Calm colours (`--hub-*`), the game frame and launch page layout (`.hub-corner`, `.hub-launch`, `.hub-play`, `.hub-levels`), the old Exit button, Tap to Start, the iPhone home-screen sizing fix |
-| `kit.js` | `setupPage()`, `addSettingsGear()`, `gameFrame()` (Hub/Home top left, Settings gear top right; `setPage('launch'|'play')`), `addExitButton()` (older games, until they move to the frame), `tapToStart()`, `isInstalled()`, `warmOffline()` (save a whole game for offline in the background) |
+| `kit.js` | `setupPage()`, `addSettingsGear()`, `gameFrame()` (Hub/Home top left, Settings gear top right; `setPage('launch'|'play')`; `onHelp` adds a ? under the gear while playing), `addExitButton()` (older games, until they move to the frame), `tapToStart()` (`choices` turns it into a question, e.g. Finger / Stylus), `isInstalled()`, `warmOffline()` (save a whole game for offline in the background) |
+| `book.js` + `book.css` | `Book`: a game's levels as pages of a puzzle book (six tiles a page, first/previous/next/last arrows, Start greyed until a level is picked). The game draws each tile. Rules: `../PATTERNS.md` "The book". Used by Quiet Numbers |
 | `save.js` | `gameStore(id)` (saves with the game's name in front), transfer codes, backup files |
 | `panzoom.js` | `PanZoom`: pinch/drag/wheel zoom and pan for a board drawn on a canvas, taps told apart from drags (from Love To Color; used by Arrowhead) |
 | `settings.js` + `settings.css` | `SettingsPanel`: the one Settings panel every game uses (and, with `global: true`, GameHub's own settings: every game's starting point; a game saves only what was changed in it, `my-settings`, and has a "Reset to GameHub settings" button), kept short: open are Light (Day/Night/Auto), Sound (sliders, Music style as one row, Mute) and the game's own sections; Nature sounds, Move your progress and Credits fold into closed dropdowns; hidden grown-up tools. Saves settings and plays them through `Sound`. Music = Quiet Words' music or any Melody Garden style. Helpers `toggle`, `slider`, `choice`, `note`. Used by Arrowhead, Calm Bubbles and Love To Color |
@@ -26,6 +27,10 @@ launch page: see "The game frame" in `../CLAUDE.md` (private) for the rules.
 | `sound/` | `Sound`: soft marimba notes, 7 nature sounds, gentle generated music (from Quiet Words), and music styles |
 | `sound/styles.js` | `STYLES`: music recipes made in Melody Garden (lullaby, Japanese garden, Celtic harp, rainy café, island, canyon flute). A game plays one with `sound.setStyle(style, dials)` + `sound.setMusic(true)` |
 | `sound/composer.js`, `sound/instruments.js` | The composer that plays a style live (never repeats) and its instruments: music box, kalimba, marimba, harp, koto, soft piano, pad, wooden flute, bass, soft drum, shaker, rattle, brushes |
+
+**Ideas, not just code:** `../PATTERNS.md` keeps the game designs worth reusing (the book, the
+back of the book, tap = pencil / drag = ink, finger or stylus dragging, the rules page and the
+play-time clock) and points to their code.
 
 ## Rules
 

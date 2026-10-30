@@ -64,9 +64,12 @@ export function addExitButton({ label = 'Hub', beforeExit } = {}) {
 //   const frame = gameFrame({ onSettings: () => panel.open(), beforeExit: saveNow, onHome: showHome })
 //   frame.setPage('play')    // Home instead of Hub
 //   frame.setPage('launch')  // Hub again
+// onHelp (added 2026-10-30, Quiet Numbers): a round ? under the gear while playing, for the game's
+// rules. setPage('play') shows it; a game can hide it on its own pages with frame.help.hidden = true.
 const ICONS = {
   hub: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.6"/></svg>',
   home: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.2 12 4.5l8 6.7"/><path d="M6.5 9.5V19.5h11V9.5"/><path d="M10.2 19.5v-5h3.6v5"/></svg>',
+  help: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.4 9.4a2.7 2.7 0 0 1 5.2.9c0 1.9-2.6 2.2-2.6 4"/><path d="M12 17.3v.2"/></svg>',
   gear: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.6-2-3.4-2.4 1a7.7 7.7 0 0 0-2.6-1.5L14 2.5h-4l-.4 2.5A7.7 7.7 0 0 0 7 6.5l-2.4-1-2 3.4 2 1.6a7.6 7.6 0 0 0 0 3l-2 1.6 2 3.4 2.4-1a7.7 7.7 0 0 0 2.6 1.5l.4 2.5h4l.4-2.5a7.7 7.7 0 0 0 2.6-1.5l2.4 1 2-3.4-2-1.6Z"/></svg>',
 }
 
@@ -87,10 +90,12 @@ export function addSettingsGear(onSettings) {
   return gear
 }
 
-export function gameFrame({ onSettings, beforeExit, onHome } = {}) {
+export function gameFrame({ onSettings, beforeExit, onHome, onHelp } = {}) {
   const hub = cornerButton('hub-corner hub-corner-left', 'Exit to GameHub', 'hub', 'Hub')
   const home = cornerButton('hub-corner hub-corner-left', 'Back to the game’s home', 'home', 'Home')
   const gear = addSettingsGear(onSettings)
+  const help = onHelp ? cornerButton('hub-corner hub-corner-right hub-help', 'How to play', 'help') : null
+  help?.addEventListener('click', () => onHelp())
   hub.addEventListener('click', async () => {
     try {
       await beforeExit?.()
@@ -102,14 +107,20 @@ export function gameFrame({ onSettings, beforeExit, onHome } = {}) {
   const setPage = (page) => {
     hub.hidden = page === 'play'
     home.hidden = page !== 'play'
+    if (help) help.hidden = page !== 'play'
   }
   setPage('launch')
-  return { hub, home, gear, setPage }
+  return { hub, home, gear, help, setPage }
 }
 
 // A full-screen "Tap to Start" card. Sound may only begin from a tap on iPhone, so onStart
 // (called during that tap) is where to call sound.unlock(). Resolves once tapped.
-export function tapToStart({ title, subtitle = '', button = 'Tap to Start', onStart } = {}) {
+//
+// choices (added 2026-10-30 for Quiet Numbers' Finger / Stylus): instead of one button, a
+// question answered by tapping one of the buttons ([{ value, label, hint }]). Only those buttons
+// start the game; onStart(value) and the promise get the value picked. Not saved: asked every
+// time the game opens.
+export function tapToStart({ title, subtitle = '', button = 'Tap to Start', choices, onStart } = {}) {
   return new Promise((resolve) => {
     const screen = document.createElement('div')
     screen.className = 'hub-start'
@@ -117,17 +128,31 @@ export function tapToStart({ title, subtitle = '', button = 'Tap to Start', onSt
       <div class="hub-start-card">
         <h1></h1>
         <p></p>
-        <button type="button" class="hub-button"></button>
       </div>`
     screen.querySelector('h1').textContent = title
     screen.querySelector('p').textContent = subtitle
-    screen.querySelector('button').textContent = button
-    screen.addEventListener('click', () => {
-      onStart?.()
+    const begin = (value) => {
+      onStart?.(value)
       screen.classList.add('hub-start-done')
       setTimeout(() => screen.remove(), 400)
-      resolve()
-    }, { once: true })
+      resolve(value)
+    }
+    const card = screen.querySelector('.hub-start-card')
+    if (choices?.length) {
+      const row = document.createElement('div')
+      row.className = 'hub-start-choices'
+      for (const choice of choices) {
+        const b = Object.assign(document.createElement('button'), { type: 'button', className: 'hub-button' })
+        b.append(choice.label)
+        if (choice.hint) b.append(Object.assign(document.createElement('small'), { textContent: choice.hint }))
+        b.addEventListener('click', () => begin(choice.value), { once: true })
+        row.append(b)
+      }
+      card.append(row)
+    } else {
+      card.append(Object.assign(document.createElement('button'), { type: 'button', className: 'hub-button', textContent: button }))
+      screen.addEventListener('click', () => begin(), { once: true })
+    }
     document.body.append(screen)
   })
 }
