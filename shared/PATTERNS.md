@@ -55,14 +55,16 @@ The touch itself says how sure you are, so there are no mode buttons.
 - **Drag** = a committed answer (ink): deliberate, so a stray tap can never commit anything.
 - A held number and a picked square never go together, so a tap never does something hidden.
 
-## Finger or stylus (dragging you can see)
+## Dragging you can see (the number floats above)
 
-*From Quiet Numbers (2026-10-30). Code: `tapToStart({ choices })` in `v1/kit.js` for the question;
-the drag in `quiet-numbers/js/main.js` (`FINGER_LIFT`, `dropPoint`).*
+*From Quiet Numbers (2026-10-30). Code: the drag in `quiet-numbers/js/main.js` (`FINGER_LIFT`,
+`dropPoint`).*
 
-A finger hides what it drags (the "fat finger" problem). Ask on the start card: **Finger** = the
-dragged thing floats about 72 px above the fingertip and lands where *it* is (a ring shows the
-target); **Stylus** = it sits at the tip, see-through. Asked every time the game opens; not saved.
+A finger hides what it drags (the "fat finger" problem). The dragged thing floats about 72 px
+above the fingertip and lands where *it* is, with a ring on the target. Use the same for a
+stylus: the first version asked Finger or Stylus (a stylus put it right at the tip), but the user
+tried both and liked the floating one best with a stylus too, so there's no question. The
+toolbox's `tapToStart({ choices })` is still there for a game that needs to ask something.
 
 ## The rules page and the play-time clock
 

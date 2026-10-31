@@ -18,7 +18,7 @@ launch page: see "The game frame" in `../CLAUDE.md` (private) for the rules.
 | File | Gives you |
 |---|---|
 | `kit.css` | Calm colours (`--hub-*`), the game frame and launch page layout (`.hub-corner`, `.hub-launch`, `.hub-play`, `.hub-levels`), the old Exit button, Tap to Start, the iPhone home-screen sizing fix |
-| `kit.js` | `setupPage()`, `addSettingsGear()`, `gameFrame()` (Hub/Home top left, Settings gear top right; `setPage('launch'|'play')`; `onHelp` adds a ? under the gear while playing), `addExitButton()` (older games, until they move to the frame), `tapToStart()` (`choices` turns it into a question, e.g. Finger / Stylus), `isInstalled()`, `warmOffline()` (save a whole game for offline in the background) |
+| `kit.js` | `setupPage()`, `addSettingsGear()`, `gameFrame()` (Hub/Home top left, Settings gear top right; `setPage('launch'|'play')`; `onHelp` adds a ? under the gear while playing), `addExitButton()` (older games, until they move to the frame), `tapToStart()` (`choices` turns it into a question), `isInstalled()`, `warmOffline()` (save a whole game for offline in the background) |
 | `book.js` + `book.css` | `Book`: a game's levels as pages of a puzzle book (six tiles a page, first/previous/next/last arrows, Start greyed until a level is picked). The game draws each tile. Rules: `../PATTERNS.md` "The book". Used by Quiet Numbers |
 | `crossword.js` | `Crossword`: a free-form crossword of lines (letters, numbers, signs) across and down, crossing at matching pieces and touching nowhere else; `runs()` to check a layout. Pure code (works in Node too). Made general from Quiet Words' word layout for Sum Cross |
 | `save.js` | `gameStore(id)` (saves with the game's name in front), transfer codes, backup files |
@@ -30,7 +30,7 @@ launch page: see "The game frame" in `../CLAUDE.md` (private) for the rules.
 | `sound/composer.js`, `sound/instruments.js` | The composer that plays a style live (never repeats) and its instruments: music box, kalimba, marimba, harp, koto, soft piano, pad, wooden flute, bass, soft drum, shaker, rattle, brushes |
 
 **Ideas, not just code:** `../PATTERNS.md` keeps the game designs worth reusing (the book, the
-back of the book, tap = pencil / drag = ink, finger or stylus dragging, the rules page and the
+back of the book, tap = pencil / drag = ink, dragging you can see, the rules page and the
 play-time clock) and points to their code.
 
 ## Rules

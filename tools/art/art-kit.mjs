@@ -77,8 +77,8 @@ const CATALOGUE = [
     path: '/quiet_numbers/',
     tokens: ['--hub-bg', '--hub-ink', '--hub-panel', '--hub-accent', '--hub-line'],
     items: [
-      { id: 'tap-to-start', name: 'Tap to Start card (with the Finger / Stylus question)', made: 'CSS', capture: { selector: '.hub-start-card', before: true } },
-      { id: 'start-choice', name: 'A choice on the start card', made: 'CSS', capture: { selector: '.hub-start-card .hub-button', before: true } },
+      { id: 'tap-to-start', name: 'Tap to Start card', made: 'CSS', capture: { selector: '.hub-start-card', before: true } },
+      { id: 'start-button', name: 'Tap to Start button', made: 'CSS', capture: { selector: '.hub-start-card .hub-button', before: true } },
       { id: 'corner-hub', name: 'Hub button (top left, launch page)', made: 'SVG in code (kit.js ICONS.hub) + text', capture: { selector: '.hub-corner-left:visible' }, notes: 'Icon drawn in a 24×24 box, 2 px lines.' },
       { id: 'corner-gear', name: 'Settings gear (top right, every page)', made: 'SVG in code (kit.js ICONS.gear)', capture: { selector: '.hub-gear' }, notes: 'Never moves or changes look.' },
       { id: 'launch-play', name: 'Play button (bottom, the main action)', made: 'CSS', capture: { selector: '#play' } },
