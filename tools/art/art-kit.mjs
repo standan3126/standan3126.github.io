@@ -38,6 +38,7 @@ const click = async (page, selector, wait = 700) => {
   } catch {
     return
   }
+  if ((await el.getAttribute('aria-expanded')) === 'true') return // already open (a card the game reopened)
   await el.click()
   await page.waitForTimeout(wait)
 }
@@ -216,6 +217,18 @@ const CATALOGUE = [
       { id: 'sumcross-tile', name: 'Book tile: Sum Cross', made: 'CSS', capture: { steps: [['#open-sumcross'], ['#play']], selector: '.hub-book-tile' } },
       { id: 'sumcross-board', name: 'Sum Cross play screen (whole screen)', made: 'CSS boxes', capture: { steps: [['#open-sumcross'], ['#play'], ['#start'], ['#rules']], selector: 'body', viewport: true }, notes: 'Boxes: number (blank or printed), sign (+ − × ÷ = √, tinted), dark hole, squared (² in the corner). Box lines 2 px. Boxes scale with the zoom.' },
       { id: 'sumcross-bank-tile', name: 'Number bank tile', made: 'CSS + text', capture: { steps: [['#open-sumcross'], ['#play'], ['#start'], ['#rules']], selector: '.bank-tile' } },
+      // Math Bash
+      { id: 'mathbash-card', name: 'Math Bash card on the launch page (open)', made: 'CSS', capture: { steps: [['#open-mathbash']], selector: '#card-mathbash' } },
+      { id: 'mathbash-chip', name: 'Category choice (Addition ... Random)', made: 'CSS', capture: { steps: [['#open-mathbash']], selector: '#mathbash-category .chip-row' } },
+      { id: 'mathbash-mode', name: 'Test / Pop Quiz choice', made: 'CSS', capture: { steps: [['#open-mathbash']], selector: '#mathbash-mode .level-row' } },
+      { id: 'mathbash-tile', name: 'Book tile: a test (lined paper, the grade in red once handed in)', made: 'CSS', capture: { steps: [['#open-mathbash'], ['#play']], selector: '.hub-book-tile' } },
+      { id: 'mathbash-test', name: 'A test question (whole screen)', made: 'CSS + text', capture: { steps: [['#open-mathbash'], ['#play'], ['#start'], ['#mb-rules']], selector: 'body', viewport: true } },
+      { id: 'mathbash-key', name: 'Keypad key', made: 'CSS + text', capture: { steps: [['#open-mathbash'], ['#play'], ['#start'], ['#mb-rules']], selector: '.mb-key' } },
+      { id: 'mathbash-key-delete', name: 'Keypad delete key', made: 'text glyph ⌫', capture: { steps: [['#open-mathbash'], ['#play'], ['#start'], ['#mb-rules']], selector: '.mb-key', nth: 9 } },
+      { id: 'mathbash-key-next', name: 'Keypad Next key', made: 'CSS + text', capture: { steps: [['#open-mathbash'], ['#play'], ['#start'], ['#mb-rules']], selector: '.mb-next' } },
+      { id: 'mathbash-review', name: 'Review sheet (whole screen)', made: 'CSS', capture: { steps: [['#open-mathbash'], ['#play'], ['#start'], ['#mb-rules'], ['#mb-review']], selector: 'body', viewport: true } },
+      { id: 'mathbash-marked', name: 'The marked test with its grade (whole screen)', made: 'CSS + text (✓ ✗ glyphs)', capture: { steps: [['#open-mathbash'], ['#play'], ['#start'], ['#mb-rules'], ['#mb-review'], ['#mb-handin', 1000]], selector: 'body', viewport: true }, notes: 'The grade letter is written in a handwriting font, red like a teacher\'s pencil.' },
+      { id: 'mathbash-quiz-card', name: 'Pop Quiz start card', made: 'CSS', capture: { steps: [['#open-mathbash'], ['#mathbash-mode .level-row >> nth=1'], ['#play'], ['#mb-rules']], selector: '#mb-card .done-card' } },
     ],
   },
 ]
